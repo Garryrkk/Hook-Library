@@ -3,13 +3,18 @@ from googleapiclient.discovery import build
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from app.models.hook_model import Hook
-from app.core.database import SessionLocal
+from app.core.database import SessionLocal, Base, engine  # add engine and Base
 
 load_dotenv()
 
 API_KEY = os.getenv("YOUTUBE_API_KEY")
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
+
+# --------------------------
+# Create tables if they don't exist
+# --------------------------
+Base.metadata.create_all(bind=engine)
 
 def get_youtube_service():
     return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=API_KEY)
