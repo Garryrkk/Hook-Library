@@ -1,6 +1,6 @@
 from transformers import pipeline
-from app.core.database import SessionLocal
-from app.models.hook_model import Hook
+from backend.app.core.database import SessionLocal
+from backend.app.models.hook_model import Hook
 
 classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 

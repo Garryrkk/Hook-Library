@@ -1,15 +1,22 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+import os
 
-# SQLite database URL
-DATABASE_URL = "sqlite:///./hooks.db"
+# Load environment variables from .env (optional but good practice)
+load_dotenv()
 
-# SQLAlchemy engine
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
+# Your PostgreSQL connection string
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+psycopg2://postgres:Garima123@localhost:5432/hookbank"
 )
 
-# Session factory
+# Create SQLAlchemy engine
+engine = create_engine(DATABASE_URL)
+
+# Session for DB operations
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Base class for models

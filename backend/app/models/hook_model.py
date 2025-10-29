@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String
-from app.core.database import Base  # Make sure you have Base defined in database.py
+from backend.app.core.database import Base
 
 class Hook(Base):
     __tablename__ = "hooks"
