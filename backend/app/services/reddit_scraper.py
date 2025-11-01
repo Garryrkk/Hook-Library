@@ -5,7 +5,7 @@ from app.models.hook_model import Hook
 from app.core.database import SessionLocal
 from app.core.config import settings  # Make sure you have a config.py file
 
-# Load environment variables
+# Load benvironment variables
 load_dotenv()
 
 # Initialize Reddit client once
