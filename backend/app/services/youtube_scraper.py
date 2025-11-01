@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from app.models.hook_model import Hook
 from app.core.database import SessionLocal, Base, engine  # add engine and Base
+from app.core.config import settings  # load envs from config
 
 load_dotenv()
 
@@ -14,8 +15,6 @@ YOUTUBE_API_VERSION = "v3"
 # --------------------------
 # Create tables if they don't exist
 # --------------------------
-Base.metadata.create_all(bind=engine)
-
 def get_youtube_service():
     return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=API_KEY)
 
@@ -51,6 +50,22 @@ def save_hooks_to_db(videos, niche: str):
         db.add(new_hook)
     db.commit()
     db.close()
+    
+def scrape_and_store(keyword: str, limit: int = 20):
+    """Fetch and save YouTube hooks for a single niche."""
+    videos = fetch_youtube_videos(keyword, max_results=limit)
+    if videos:
+        save_hooks_to_db(videos, niche=keyword)
+    else:
+        print(f"⚠️ No videos found for '{keyword}'.")
+
+
+def scrape_youtube_all():
+    """Scrape and save hooks for multiple niches."""
+    niches = ["motivation", "fitness", "business", "productivity", "makeup"]
+    for niche in niches:
+        print(f"🎥 Scraping YouTube for: {niche}")
+        scrape_and_store(niche, limit=20)
 
 if __name__ == "__main__":
     niche = input("Enter niche keyword (e.g. motivation, fitness, business): ")
