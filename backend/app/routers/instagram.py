@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query
-from backend.app.services.instagram_scaper import scrape_and_store, scrape_instagram_all
+from app.services.instagram_scaper import scrape_and_store, scrape_instagram_all
 
 router = APIRouter(prefix="/instagram", tags=["Instagram"])
 

@@ -47,7 +47,7 @@ def scrape_and_store(username: str, limit: int = 10):
 
 def scrape_instagram_all():
     """Scrape a few default public accounts."""
-    accounts = ["garyvee", "hubspot", "marketingharry", "creators", "themodernimbecile"]
+    accounts = ["garyvee", "garimakalraaa", "hubspot", "marketingharry", "creators", "themodernimbecile"]
     for acc in accounts:
         print(f"📸 Scraping Instagram user: {acc}")
         scrape_and_store(acc, 5)
