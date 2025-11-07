@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from "axios";
 import { 
   Search, Menu, X, Youtube, Camera, Mail, Mic, Video, Pen, Copy, Heart, 
   ExternalLink, ChevronDown, Sparkles, TrendingUp, Clock, Filter, Bell,
@@ -927,12 +928,28 @@ export default function DashboardApp() {
     showToast('Analytics coming soon!', 'info');
   };
 
-  const handleScrape = async (platform) => {
+const handleScrape = async (platform) => {
+  try {
     addScraperLog('success', `Starting ${platform} scrape...`);
-    setTimeout(() => {
-      addScraperLog('success', `Scraped 50 posts from ${platform}`);
-    }, 1500);
-  };
+    
+    if (platform === "reddit") {
+      const res = await axios.post("http://127.0.0.1:8000/reddit/scrape", null, {
+        params: { subreddit: "Business", limit: 5 },
+      });
+      setHooks(res.data.data); // updates dashboard hooks
+      addScraperLog('success', `✅ Reddit scrape successful! Loaded ${res.data.data.length} posts.`);
+      showToast('Reddit scrape completed successfully!', 'success');
+    } else {
+      addScraperLog('error', `${platform} scraper not implemented yet.`);
+      showToast(`${platform} scraper not connected yet.`, 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    addScraperLog('error', `Failed to scrape ${platform}: ${err.message}`);
+    showToast(`Error scraping ${platform}`, 'error');
+  }
+};
+
 
   const addScraperLog = (type, message) => {
     setScraperLogs(prev => [...prev, { type, message }]);

@@ -6,6 +6,7 @@ import {
   RefreshCw, Sun, Moon, Check, AlertCircle, RotateCcw, Eye,
   ThumbsUp, MessageCircle, Share2, Bookmark, ArrowUp
 } from 'lucide-react';
+import axios from "axios";
 
 // ============================================
 // NAVBAR COMPONENT
@@ -658,7 +659,7 @@ export default function ExplorerApp() {
     "I analyzed 1000 viral videos and found these 3 patterns"
   ]);
 
-  const [allHooks] = useState([
+  const [allHooks, setAllHooks] = useState([
     {
       id: 1,
       text: "How I made $10k in 30 days with this simple trick nobody talks about",
@@ -770,6 +771,26 @@ export default function ExplorerApp() {
   ]);
 
   const [visibleHooks, setVisibleHooks] = useState(9);
+
+  const fetchHooksFromBackend = async () => {
+  try {
+    const response = await axios.post("http://127.0.0.1:8000/reddit/scrape", null, {
+      params: { subreddit: "Business", limit: 5 }
+    });
+    setAllHooks(response.data.data);
+    // Here’s where you can update your front-end state with backend data
+    // Example:
+    // setAllHooks(response.data.data);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+};
+
+useEffect(() => {
+  fetchHooksFromBackend();
+}, []);
+
+
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));

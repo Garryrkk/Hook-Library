@@ -53,8 +53,9 @@ def scrape_and_store(subreddit_name: str, limit: int = 50):
     posts = fetch_reddit_posts(subreddit_name, limit)
     if posts:
         save_hooks_to_db(posts, niche=subreddit_name)
+        return posts
     else:
-        print(f"⚠️ No posts found for r/{subreddit_name}")
+        return[f"⚠️ No posts found for r/{subreddit_name}"]
 
 
 def scrape_reddit_all():
