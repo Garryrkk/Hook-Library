@@ -469,9 +469,9 @@ const Footer = () => {
 };
 
 // ============================================
-// MAIN APP COMPONENT
+// MAIN HOMEPAGE COMPONENT
 // ============================================
-export default function App() {
+export default function HomePage() {
   const [sampleHooks] = useState([
     {
       id: 1,

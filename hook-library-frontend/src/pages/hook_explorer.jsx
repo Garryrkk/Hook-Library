@@ -625,9 +625,9 @@ const Footer = () => {
 };
 
 // ============================================
-// MAIN EXPLORER APP COMPONENT
+// MAIN EXPLORER PAGE COMPONENT
 // ============================================
-export default function ExplorerApp() {
+export default function ExplorerPage() {
   const [darkMode, setDarkMode] = useState(true);
   const [toast, setToast] = useState(null);
   const [savedHooks, setSavedHooks] = useState(new Set());
@@ -773,24 +773,19 @@ export default function ExplorerApp() {
   const [visibleHooks, setVisibleHooks] = useState(9);
 
   const fetchHooksFromBackend = async () => {
-  try {
-    const response = await axios.post("http://127.0.0.1:8000/reddit/scrape", null, {
-      params: { subreddit: "Business", limit: 5 }
-    });
-    setAllHooks(response.data.data);
-    // Here’s where you can update your front-end state with backend data
-    // Example:
-    // setAllHooks(response.data.data);
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  }
-};
+    try {
+      const response = await axios.post("http://127.0.0.1:8000/reddit/scrape", null, {
+        params: { subreddit: "Business", limit: 5 }
+      });
+      setAllHooks(response.data.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
 
-useEffect(() => {
-  fetchHooksFromBackend();
-}, []);
-
-
+  useEffect(() => {
+    fetchHooksFromBackend();
+  }, []);
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -833,6 +828,7 @@ useEffect(() => {
 
   const handleRefresh = () => {
     showToast('Refreshing hooks...', 'info');
+    fetchHooksFromBackend();
   };
 
   const handleLoadMore = () => {

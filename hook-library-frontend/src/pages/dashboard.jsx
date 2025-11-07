@@ -769,9 +769,9 @@ const Footer = () => {
 };
 
 // ============================================
-// MAIN DASHBOARD APP COMPONENT
+// MAIN DASHBOARD PAGE COMPONENT
 // ============================================
-export default function DashboardApp() {
+export default function DashboardPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(false);
@@ -928,28 +928,27 @@ export default function DashboardApp() {
     showToast('Analytics coming soon!', 'info');
   };
 
-const handleScrape = async (platform) => {
-  try {
-    addScraperLog('success', `Starting ${platform} scrape...`);
-    
-    if (platform === "reddit") {
-      const res = await axios.post("http://127.0.0.1:8000/reddit/scrape", null, {
-        params: { subreddit: "Business", limit: 5 },
-      });
-      setHooks(res.data.data); // updates dashboard hooks
-      addScraperLog('success', `✅ Reddit scrape successful! Loaded ${res.data.data.length} posts.`);
-      showToast('Reddit scrape completed successfully!', 'success');
-    } else {
-      addScraperLog('error', `${platform} scraper not implemented yet.`);
-      showToast(`${platform} scraper not connected yet.`, 'error');
+  const handleScrape = async (platform) => {
+    try {
+      addScraperLog('success', `Starting ${platform} scrape...`);
+      
+      if (platform === "reddit") {
+        const res = await axios.post("http://127.0.0.1:8000/reddit/scrape", null, {
+          params: { subreddit: "Business", limit: 5 },
+        });
+        setHooks(res.data.data);
+        addScraperLog('success', `✅ Reddit scrape successful! Loaded ${res.data.data.length} posts.`);
+        showToast('Reddit scrape completed successfully!', 'success');
+      } else {
+        addScraperLog('error', `${platform} scraper not implemented yet.`);
+        showToast(`${platform} scraper not connected yet.`, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      addScraperLog('error', `Failed to scrape ${platform}: ${err.message}`);
+      showToast(`Error scraping ${platform}`, 'error');
     }
-  } catch (err) {
-    console.error(err);
-    addScraperLog('error', `Failed to scrape ${platform}: ${err.message}`);
-    showToast(`Error scraping ${platform}`, 'error');
-  }
-};
-
+  };
 
   const addScraperLog = (type, message) => {
     setScraperLogs(prev => [...prev, { type, message }]);
