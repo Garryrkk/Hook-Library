@@ -7,7 +7,7 @@ import HomePage from './pages/homepage';
 import DashboardPage from './pages/dashboard';
 import ExplorerPage from './pages/hook_explorer';
 import ScraperPage from './pages/scraper_console';
-import AboutPage from './pages/AboutPage';
+import AboutPage from './pages/AboutPage.jsx';
 
 function App() {
   const location = useLocation();
