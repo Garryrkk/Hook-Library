@@ -7,6 +7,8 @@ import {
   ThumbsUp, MessageCircle, Share2, Bookmark, ArrowUp
 } from 'lucide-react';
 import axios from "axios";
+import { API_URL } from "../utils/config";
+
 
 // ============================================
 // NAVBAR COMPONENT

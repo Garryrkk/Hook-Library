@@ -6,14 +6,15 @@ class Settings(BaseSettings):
     REDDIT_CLIENT_SECRET: str
     REDDIT_USER_AGENT: str
 
-    # YouTube API (optional for later)
+    # YouTube API
     YOUTUBE_API_KEY: str | None = None
 
     # Database
     DATABASE_URL: str = "sqlite:///./hooks.db"
 
     class Config:
-        env_file = ".env"  # Load environment variables from .env file
+        env_file = ".env"
+        extra = "ignore"  # ✅ Ignore extra env variables
 
 # Create a single instance
 settings = Settings()

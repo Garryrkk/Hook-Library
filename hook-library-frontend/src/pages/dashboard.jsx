@@ -7,6 +7,8 @@ import {
   Settings, User, RefreshCw, BarChart3, Download, ChevronUp, Trash2,
   Check, AlertCircle, Loader
 } from 'lucide-react';
+import { API_URL } from "../utils/config";
+
 
 // ============================================
 // NAVBAR COMPONENT (Dashboard Version)

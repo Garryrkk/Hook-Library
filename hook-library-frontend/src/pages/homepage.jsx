@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Menu, X, Youtube, Camera, Mail, Mic, Video, Pen, Copy, Heart, ExternalLink, ChevronDown, Sparkles, TrendingUp, Clock, Filter } from 'lucide-react';
+import { API_URL } from "../utils/config";
 
 // ============================================
 // NAVBAR COMPONENT
@@ -16,9 +17,8 @@ const Navbar = ({ onNavigate }) => {
   }, []);
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled ? 'bg-[#0a0a0f]/80 backdrop-blur-lg shadow-lg shadow-purple-500/10' : 'bg-transparent'
-    }`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#0a0a0f]/80 backdrop-blur-lg shadow-lg shadow-purple-500/10' : 'bg-transparent'
+      }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -138,7 +138,7 @@ const Hero = ({ onExplore, onScrape }) => {
         >
           Hook Bank
         </motion.h1>
-        
+
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -147,7 +147,7 @@ const Hero = ({ onExplore, onScrape }) => {
         >
           Find hooks that go viral
         </motion.p>
-        
+
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -172,7 +172,7 @@ const Hero = ({ onExplore, onScrape }) => {
           >
             Explore Dashboard
           </motion.button>
-          
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -246,42 +246,39 @@ const StatsBar = () => {
 const PlatformCard = ({ platform, icon: Icon, description, color }) => {
   const [loading, setLoading] = useState(false);
 
+  const API_URL = "http://localhost:5000";
+
   const handleScrape = async () => {
     setLoading(true);
-    setTimeout(() => setLoading(false), 2000);
+    try {
+      const res = await fetch(`${API_URL}/scrape/reddit`);
+      const data = await res.json();
+      console.log("Scraped:", data);
+    } catch (err) {
+      console.error("Scrape error:", err);
+    }
+    setLoading(false);
   };
 
   return (
     <motion.div
       whileHover={{ scale: 1.05, y: -5 }}
       className="bg-gradient-to-br from-[#1a0a2e]/80 to-[#0a0a0f]/80 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6 relative overflow-hidden group cursor-pointer"
+      onClick={handleScrape}
     >
-      <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-10 transition-opacity`} />
-      
+      <div
+        className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-10 transition-opacity`}
+      />
       <div className="relative z-10">
-        <div className="mb-4">
-          <Icon size={48} className="text-purple-400 group-hover:text-pink-400 transition-colors" />
-        </div>
-        
-        <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-          {platform}
-        </h3>
-        
-        <p className="text-gray-400 text-sm mb-4">{description}</p>
-        
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="w-full px-4 py-2 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold text-sm disabled:opacity-50"
-          onClick={handleScrape}
-          disabled={loading}
-        >
-          {loading ? 'Scraping...' : 'Scrape Now'}
-        </motion.button>
+        <Icon className="w-12 h-12 mb-4 text-purple-400" />
+        <h3 className="text-xl font-semibold mb-2">{platform}</h3>
+        <p className="text-sm text-gray-400">{description}</p>
+        {loading && <p className="text-sm text-pink-400 mt-2">Scraping...</p>}
       </div>
     </motion.div>
   );
 };
+
 
 // ============================================
 // SEARCH BAR COMPONENT
@@ -338,14 +335,14 @@ const SearchBar = ({ onSearch }) => {
               <option>Reddit</option>
               <option>Instagram</option>
             </select>
-            
+
             <select className="px-4 py-2 bg-[#1a0a2e]/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500">
               <option>All Tones</option>
               <option>Motivational</option>
               <option>Shock</option>
               <option>Educational</option>
             </select>
-            
+
             <select className="px-4 py-2 bg-[#1a0a2e]/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500">
               <option>Sort: Newest</option>
               <option>Most Popular</option>
@@ -575,7 +572,7 @@ export default function HomePage() {
       <Navbar />
       <Hero />
       <StatsBar />
-      
+
       {/* Platform Section */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
@@ -589,7 +586,7 @@ export default function HomePage() {
             <span className="hero-gradient-text">Supported Platforms</span>
           </motion.h2>
           <p className="text-gray-400 text-center mb-12">Scrape viral hooks from multiple platforms</p>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {platforms.map((platform, i) => (
               <motion.div
@@ -621,7 +618,7 @@ export default function HomePage() {
             <span className="hero-gradient-text">Trending Hooks</span>
           </motion.h2>
           <p className="text-gray-400 text-center mb-12">Discover what's working right now</p>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sampleHooks.map((hook, i) => (
               <HookCard
