@@ -38,7 +38,7 @@ def scrape_all():
 # ✅ Get all hooks from DB
 @router.get("/hooks", response_model=List[HookResponse])
 def get_hooks(db: Session = Depends(get_db)):
-    hooks = db.query(Hook).order_by(Hook.created_at.desc()).all()
+    hooks = db.query(Hook).all()
     return hooks
 
 
