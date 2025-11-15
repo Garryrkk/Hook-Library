@@ -7,7 +7,8 @@ from EssentialFeatures.EssentialFeaturesSchemas import (
     EssentialHook,
     EssentialPost,
     EssentialPostLike,
-    EssentialPostSave
+    EssentialPostSave,
+    EssentialHookComment
 )
 
 
@@ -69,6 +70,91 @@ def record_share_service(post_id):
 
     return {"message": "Share recorded."}
 
+def record_hook_view_service(hook_id):
+    hook = EssentialHook.query.get_or_404(hook_id)
+    hook.view_count = hook.view_count + 1
+    db.session.commit()
+    return {"message": "Hook view recorded.", "total_views": hook.view_count}
+
+
+def like_hook_service(hook_id):
+    hook = EssentialHook.query.get_or_404(hook_id)
+    hook.like_count = hook.like_count + 1
+    db.session.commit()
+    return {"message": "Hook liked.", "likes": hook.like_count}
+
+
+def add_hook_comment_service(hook_id, user_id, comment_text):
+    # create comment row and increment comment_count
+    comment = EssentialHookComment(hook_id=hook_id, user_id=user_id, comment_text=comment_text)
+    db.session.add(comment)
+    hook = EssentialHook.query.get_or_404(hook_id)
+    hook.comment_count = hook.comment_count + 1
+    db.session.commit()
+    return {"message": "Comment added.", "comments": hook.comment_count}
+
+
+def record_hook_copy_service(hook_id):
+    hook = EssentialHook.query.get_or_404(hook_id)
+    hook.copy_count = hook.copy_count + 1
+    db.session.commit()
+    return {"message": "Copy recorded.", "copies": hook.copy_count}
+
+
+def fetch_filtered_hooks_service(
+    search_query=None,
+    platform="All Platforms",
+    niche="All Niches",
+    tone="All Tones",
+    sort_by="Newest"
+):
+    query = EssentialHook.query
+
+    if search_query and search_query.strip():
+        q = f"%{search_query.strip()}%"
+        query = query.filter(
+            (EssentialHook.title.ilike(q)) |
+            (EssentialHook.text.ilike(q)) |
+            (EssentialHook.niche.ilike(q))
+        )
+
+    if platform and platform != "All Platforms":
+        query = query.filter(EssentialHook.platform == platform)
+
+    if niche and niche != "All Niches":
+        query = query.filter(EssentialHook.niche == niche)
+
+    if tone and tone != "All Tones":
+        query = query.filter(EssentialHook.tone == tone)
+
+    # Sorting
+    if sort_by == "Newest":
+        query = query.order_by(EssentialHook.id.desc())  # id desc approximates newest
+    elif sort_by == "Most Popular":
+        query = query.order_by(EssentialHook.view_count.desc())
+    elif sort_by == "Most Copied":
+        query = query.order_by(EssentialHook.copy_count.desc())
+    elif sort_by == "Highest Engagement":
+        # engagement = like_count + comment_count + view_count (DB expression)
+        query = query.order_by((EssentialHook.like_count + EssentialHook.comment_count + EssentialHook.view_count).desc())
+    else:
+        query = query.order_by(EssentialHook.id.desc())
+
+    hooks = query.all()
+    return [h.to_dict() for h in hooks]
+
+
+
+def reset_filters_service():
+    # just return all hooks ordered by id desc
+    hooks = EssentialHook.query.order_by(EssentialHook.id.desc()).all()
+    return [h.to_dict() for h in hooks]
+
+
+
+def refresh_hooks_service():
+    hooks = EssentialHook.query.order_by(EssentialHook.id.desc()).all()
+    return [h.to_dict() for h in hooks]
 
 def get_dashboard_metrics_service():
     # Total hooks (no time fields involved)

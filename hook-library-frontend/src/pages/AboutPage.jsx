@@ -8,9 +8,7 @@ import {
 import { API_URL } from "../utils/config";
 
 
-// ============================================
-// NAVBAR COMPONENT
-// ============================================
+
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);

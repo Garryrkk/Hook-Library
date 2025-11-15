@@ -1,5 +1,6 @@
 # essential_features/EssentialFeatures.py
 from ..core.database import db
+from EssentialFeatures.EsssentialFeatures import EssentialHook, EssentialPost, EssentialHookComment
 
 class EssentialHook(db.Model):
     __tablename__ = "essential_hooks"
@@ -71,3 +72,13 @@ class EssentialPostSave(db.Model):
     __table_args__ = (
         db.UniqueConstraint("user_id", "post_id", name="unique_user_post_save"),
     )
+
+    class EssentialHookCommentSchema(SQLAlchemySchema):
+        class Meta:
+            model = EssentialHookComment
+            load_instance = False
+
+        id = auto_field()
+        hook_id = auto_field()
+        user_id = auto_field()
+        comment_text = auto_field()
