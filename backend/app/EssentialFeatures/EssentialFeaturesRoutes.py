@@ -22,7 +22,7 @@ essential_features_bp = Blueprint("essential_features", __name__)
 hook_schema = EssentialHook
 hooks_schema = EssentialHook(many=True)
 post_schema = EssentialPost
-comment_schema = EssentialPost
+comment_schema = EssentialHookComment
 
 @essential_features_bp.route("/api/hooks", methods=["GET"])
 def get_filtered_hooks():
