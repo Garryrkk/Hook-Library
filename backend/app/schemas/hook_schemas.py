@@ -12,7 +12,6 @@ class HookCreate(BaseModel):
 
 class HookResponse(BaseModel):
     id: int
-    created_at: datetime
 
     class Config:
         orm_model = True

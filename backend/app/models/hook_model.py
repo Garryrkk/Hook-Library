@@ -10,4 +10,3 @@ class Hook(Base):
     tone = Column(String, index=True)
     niche = Column(String, index=True)
     platform = Column(String, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
