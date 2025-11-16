@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from "axios";
 import { 
   Search, Menu, X, Youtube, Camera, Mail, Mic, Video, Pen, Copy, Heart, 
   ExternalLink, ChevronDown, Sparkles, TrendingUp, Clock, Filter, Bell,
   Settings, User, RefreshCw, BarChart3, Download, ChevronUp, Trash2,
   Check, AlertCircle, Loader
 } from 'lucide-react';
-import { API_URL } from "../utils/config";
 
+// ============================================
+// API CONFIGURATION
+// ============================================
+const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
 
 // ============================================
 // NAVBAR COMPONENT (Dashboard Version)
@@ -306,7 +308,7 @@ const DashboardHeader = ({ onScrapeAll, onRefresh, onAnalyze }) => {
 // ============================================
 // STATS OVERVIEW COMPONENT
 // ============================================
-const StatsOverview = ({ stats }) => {
+const StatsOverview = ({ stats, loading }) => {
   const statCards = [
     { icon: Sparkles, label: 'Total Hooks', value: stats.total, color: 'from-pink-500 to-purple-500', emoji: '📈' },
     { icon: Youtube, label: 'YouTube Hooks', value: stats.youtube, color: 'from-red-500 to-red-700', emoji: '▶️' },
@@ -314,6 +316,22 @@ const StatsOverview = ({ stats }) => {
     { icon: Camera, label: 'Instagram Hooks', value: stats.instagram, color: 'from-purple-500 to-pink-500', emoji: '📸' },
     { icon: Heart, label: 'Saved Hooks', value: stats.saved, color: 'from-pink-500 to-red-500', emoji: '❤️' }
   ];
+
+  if (loading) {
+    return (
+      <section className="mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {statCards.map((_, i) => (
+            <div key={i} className="bg-[#1a0a2e]/30 backdrop-blur-sm border border-purple-500/20 rounded-xl p-5 animate-pulse">
+              <div className="h-8 bg-purple-500/20 rounded mb-3" />
+              <div className="h-10 bg-purple-500/20 rounded mb-2" />
+              <div className="h-4 bg-purple-500/20 rounded" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mb-8">
@@ -524,7 +542,7 @@ const HooksGrid = ({ hooks, loading }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {hooks.map((hook, i) => (
+      {hooks.map((hook) => (
         <HookCard
           key={hook.id}
           hook={hook}
@@ -777,6 +795,7 @@ export default function DashboardPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState(null);
   const [activeFilters, setActiveFilters] = useState({
@@ -785,120 +804,136 @@ export default function DashboardPage() {
     tone: null
   });
 
-  const [stats] = useState({
-    total: 1245,
-    youtube: 420,
-    reddit: 360,
-    instagram: 465,
-    saved: 128
+  const [stats, setStats] = useState({
+    total: 0,
+    youtube: 0,
+    reddit: 0,
+    instagram: 0,
+    saved: 0
   });
 
   const [scraperLogs, setScraperLogs] = useState([
     { type: 'success', message: 'System initialized successfully' }
   ]);
 
-  const [hooks, setHooks] = useState([
-    {
-      id: 1,
-      text: "How I made $10k in 30 days with this simple trick nobody talks about",
-      platform: "YouTube",
-      platformIcon: "▶️",
-      tone: "motivational",
-      niche: "business",
-      date: "2 hours ago",
-      saved: false,
-      engagement: { likes: 1234, comments: 89 }
-    },
-    {
-      id: 2,
-      text: "This Reddit comment changed my entire perspective on productivity forever",
-      platform: "Reddit",
-      platformIcon: "🧵",
-      tone: "educational",
-      niche: "productivity",
-      date: "5 hours ago",
-      saved: true,
-      engagement: { likes: 567, comments: 34 }
-    },
-    {
-      id: 3,
-      text: "The brutal truth about fitness that trainers won't tell you",
-      platform: "Instagram",
-      platformIcon: "📸",
-      tone: "shock",
-      niche: "fitness",
-      date: "1 day ago",
-      saved: false,
-      engagement: { likes: 2341, comments: 156 }
-    },
-    {
-      id: 4,
-      text: "I analyzed 1000 viral videos and found these 3 patterns that guarantee success",
-      platform: "YouTube",
-      platformIcon: "▶️",
-      tone: "educational",
-      niche: "content",
-      date: "3 days ago",
-      saved: false,
-      engagement: { likes: 4567, comments: 234 }
-    },
-    {
-      id: 5,
-      text: "Why everyone is quitting their 9-5 for this side hustle in 2024",
-      platform: "Reddit",
-      platformIcon: "🧵",
-      tone: "curiosity",
-      niche: "business",
-      date: "4 days ago",
-      saved: true,
-      engagement: { likes: 891, comments: 67 }
-    },
-    {
-      id: 6,
-      text: "The one mindset shift that millionaires use daily to stay focused",
-      platform: "Instagram",
-      platformIcon: "📸",
-      tone: "motivational",
-      niche: "mindset",
-      date: "1 week ago",
-      saved: false,
-      engagement: { likes: 3456, comments: 178 }
-    },
-    {
-      id: 7,
-      text: "Stop wasting money on ads - here's what actually works in 2024",
-      platform: "YouTube",
-      platformIcon: "▶️",
-      tone: "fear",
-      niche: "marketing",
-      date: "1 week ago",
-      saved: false,
-      engagement: { likes: 5678, comments: 312 }
-    },
-    {
-      id: 8,
-      text: "I spent $50k learning this - now I'm giving it away for free",
-      platform: "Reddit",
-      platformIcon: "🧵",
-      tone: "emotional",
-      niche: "business",
-      date: "2 weeks ago",
-      saved: false,
-      engagement: { likes: 1234, comments: 89 }
-    },
-    {
-      id: 9,
-      text: "The algorithm doesn't want you to see this content creation hack",
-      platform: "Instagram",
-      platformIcon: "📸",
-      tone: "curiosity",
-      niche: "content",
-      date: "2 weeks ago",
-      saved: true,
-      engagement: { likes: 2890, comments: 145 }
-    }
-  ]);
+  const [hooks, setHooks] = useState([]);
 
+  // ============================================
+  // API FUNCTIONS
+  // ============================================
+  
+  // Fetch dashboard metrics
+  const fetchMetrics = async () => {
+    try {
+      setStatsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/metrics/dashboard`);
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        setStats(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+      showToast('Failed to load metrics', 'error');
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  // Fetch hooks with filters
+  const fetchHooks = async () => {
+    try {
+      setLoading(true);
+      
+      // Build query parameters
+      let queryParams = `limit=100`;
+      
+      if (activeFilters.platform !== 'All') {
+        queryParams += `&platform=${activeFilters.platform}`;
+      }
+      
+      if (activeFilters.tone) {
+        queryParams += `&tone=${activeFilters.tone}`;
+      }
+      
+      if (activeFilters.niche) {
+        queryParams += `&niche=${activeFilters.niche}`;
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/hooks/all?${queryParams}`);
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        setHooks(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching hooks:', error);
+      showToast('Failed to load hooks', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Scrape platform
+  const handleScrape = async (platform) => {
+    try {
+      addScraperLog('success', `Starting ${platform} scrape...`);
+      
+      let endpoint = '';
+      if (platform === 'reddit') {
+        endpoint = `${API_BASE_URL}/reddit/scrape?subreddit=Business&limit=10`;
+      } else if (platform === 'youtube') {
+        endpoint = `${API_BASE_URL}/youtube/scrape-all`;
+      } else if (platform === 'instagram') {
+        endpoint = `${API_BASE_URL}/instagram/scrape-all`;
+      }
+
+      const response = await fetch(endpoint, { method: 'POST' });
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        addScraperLog('success', data.message);
+        showToast(`${platform} scrape completed!`, 'success');
+        
+        // Refresh data
+        await fetchMetrics();
+        await fetchHooks();
+      } else {
+        throw new Error(data.message || 'Scrape failed');
+      }
+    } catch (error) {
+      console.error('Scrape error:', error);
+      addScraperLog('error', `Failed to scrape ${platform}: ${error.message}`);
+      showToast(`Error scraping ${platform}`, 'error');
+    }
+  };
+
+  // Scrape all platforms
+  const handleScrapeAll = async () => {
+    showToast('Starting scrape on all platforms...', 'info');
+    addScraperLog('success', 'Initiating scrape for all platforms...');
+    
+    await handleScrape('reddit');
+    await handleScrape('youtube');
+    await handleScrape('instagram');
+    
+    showToast('All platforms scraped successfully!', 'success');
+  };
+
+  // Refresh data
+  const handleRefresh = async () => {
+    showToast('Refreshing data...', 'info');
+    await fetchMetrics();
+    await fetchHooks();
+    showToast('Data refreshed!', 'success');
+  };
+
+  // Analytics placeholder
+  const handleAnalyze = () => {
+    showToast('Analytics coming soon!', 'info');
+  };
+
+  // Filter change handler
   const handleFilterChange = (filterType, value) => {
     setActiveFilters(prev => ({
       ...prev,
@@ -907,72 +942,51 @@ export default function DashboardPage() {
     showToast(`Filter applied: ${value}`, 'success');
   };
 
-  const handleScrapeAll = () => {
-    setLoading(true);
-    addScraperLog('success', 'Starting scrape on all platforms...');
-    setTimeout(() => {
-      setLoading(false);
-      addScraperLog('success', 'Scraped 150 new hooks from all platforms');
-      showToast('Scrape completed successfully!', 'success');
-    }, 2000);
+  // Tab change handler
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    const platformMap = {
+      'all': 'All',
+      'youtube': 'YouTube',
+      'reddit': 'Reddit',
+      'instagram': 'Instagram'
+    };
+    setActiveFilters(prev => ({ ...prev, platform: platformMap[tab] }));
   };
 
-  const handleRefresh = () => {
-    setLoading(true);
-    showToast('Refreshing data...', 'info');
-    setTimeout(() => {
-      setLoading(false);
-      showToast('Data refreshed!', 'success');
-    }, 1500);
-  };
-
-  const handleAnalyze = () => {
-    showToast('Analytics coming soon!', 'info');
-  };
-
-  const handleScrape = async (platform) => {
-    try {
-      addScraperLog('success', `Starting ${platform} scrape...`);
-      
-      if (platform === "reddit") {
-        const res = await axios.post("http://127.0.0.1:8000/reddit/scrape", null, {
-          params: { subreddit: "Business", limit: 5 },
-        });
-        setHooks(res.data.data);
-        addScraperLog('success', `✅ Reddit scrape successful! Loaded ${res.data.data.length} posts.`);
-        showToast('Reddit scrape completed successfully!', 'success');
-      } else {
-        addScraperLog('error', `${platform} scraper not implemented yet.`);
-        showToast(`${platform} scraper not connected yet.`, 'error');
-      }
-    } catch (err) {
-      console.error(err);
-      addScraperLog('error', `Failed to scrape ${platform}: ${err.message}`);
-      showToast(`Error scraping ${platform}`, 'error');
-    }
-  };
-
+  // Helper functions
   const addScraperLog = (type, message) => {
     setScraperLogs(prev => [...prev, { type, message }]);
-  };
-
-  const clearScraperLogs = () => {
-    setScraperLogs([]);
-    showToast('Logs cleared', 'success');
   };
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
   };
 
-  const filteredHooks = hooks.filter(hook => {
-    if (activeTab !== 'all' && hook.platform.toLowerCase() !== activeTab) return false;
-    if (activeFilters.platform !== 'All' && activeFilters.platform && hook.platform !== activeFilters.platform) return false;
-    if (activeFilters.niche && hook.niche !== activeFilters.niche.toLowerCase()) return false;
-    if (activeFilters.tone && hook.tone !== activeFilters.tone.toLowerCase()) return false;
-    return true;
-  });
+  const clearScraperLogs = () => {
+    setScraperLogs([{ type: 'success', message: 'Logs cleared' }]);
+    showToast('Logs cleared', 'success');
+  };
 
+  // ============================================
+  // LIFECYCLE HOOKS
+  // ============================================
+  
+  useEffect(() => {
+    // Initial data fetch
+    fetchMetrics();
+    fetchHooks();
+  }, []);
+
+  useEffect(() => {
+    // Refetch when filters change
+    fetchHooks();
+  }, [activeFilters]);
+
+  // ============================================
+  // RENDER
+  // ============================================
+  
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
       <style>{`
@@ -1043,18 +1057,18 @@ export default function DashboardPage() {
             onAnalyze={handleAnalyze}
           />
 
-          <StatsOverview stats={stats} />
+          <StatsOverview stats={stats} loading={statsLoading} />
 
-          <PlatformTabs activeTab={activeTab} onTabChange={setActiveTab} />
+          <PlatformTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
-          <HooksGrid hooks={filteredHooks} loading={loading} />
+          <HooksGrid hooks={hooks} loading={loading} />
 
           <Pagination 
             currentPage={currentPage}
-            totalPages={5}
+            totalPages={Math.ceil(hooks.length / 9) || 1}
             onPageChange={setCurrentPage}
             totalHooks={stats.total}
-            loadedHooks={filteredHooks.length}
+            loadedHooks={hooks.length}
           />
         </div>
       </main>

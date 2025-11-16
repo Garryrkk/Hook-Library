@@ -1,7 +1,9 @@
 # essential_features/EssentialFeaturesService.py
 
 from ..core.database import db
-from sqlalchemy import func
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func, case, and_
+from typing import Dict, Optional
 
 from EssentialFeatures.EssentialFeaturesSchemas import (
     EssentialHook,
@@ -174,3 +176,116 @@ def get_dashboard_metrics_service():
         "youtubeCount": youtube_count,
         "totalHookScore": int(total_score)
     }
+
+class MetricsService:
+    """Service class for handling dashboard metrics operations"""
+    
+    def __init__(self, db: SQLAlchemy):
+        self.db = db
+    
+    def get_dashboard_metrics(self, user_id: int) -> Dict[str, int]:
+        """
+        Fetches all aggregated dashboard metrics for a user in a single query.
+        
+        Args:
+            user_id: The ID of the user to fetch metrics for
+            
+        Returns:
+            Dictionary containing aggregated metrics:
+            - totalGenerated: Total number of generated hooks
+            - totalSaved: Total number of saved hooks
+            - totalGeneratedScore: Sum of scores for generated hooks
+            - youtubeCount: Number of generated YouTube hooks
+            - redditCount: Number of generated Reddit hooks
+            - instagramCount: Number of generated Instagram hooks
+            
+        Raises:
+            Exception: If database query fails
+        """
+        try:
+            # Define reusable conditions
+            is_user = EssentialHook.user_id == user_id
+            is_generated = EssentialHook.status == "Generated"
+            is_saved = EssentialHook.status == "Saved"
+
+            # Build aggregation query with conditional counting
+            query = self.db.session.query(
+                # Total counts across all platforms
+                func.sum(case((is_generated, 1), else_=0)).label("total_generated"),
+                func.sum(case((is_saved, 1), else_=0)).label("total_saved"),
+                func.sum(case((is_generated, EssentialHook.score), else_=0)).label("total_generated_score"),
+                
+                # Platform-specific counts (only for generated status)
+                func.sum(case((and_(EssentialHook.platform == "YouTube", is_generated), 1), else_=0)).label("youtube_generated"),
+                func.sum(case((and_(EssentialHook.platform == "Reddit", is_generated), 1), else_=0)).label("reddit_generated"),
+                func.sum(case((and_(EssentialHook.platform == "Instagram", is_generated), 1), else_=0)).label("instagram_generated"),
+            ).filter(is_user)
+
+            # Execute query and get single aggregated row
+            metrics = query.first()
+
+            # Handle case where user has no hooks
+            if not metrics or metrics.total_generated is None:
+                return self._get_empty_metrics()
+
+            # Format and return results
+            return {
+                "totalGenerated": int(metrics.total_generated or 0),
+                "totalSaved": int(metrics.total_saved or 0),
+                "totalGeneratedScore": int(metrics.total_generated_score or 0),
+                "youtubeCount": int(metrics.youtube_generated or 0),
+                "redditCount": int(metrics.reddit_generated or 0),
+                "instagramCount": int(metrics.instagram_generated or 0),
+            }
+            
+        except Exception as e:
+            # Re-raise with context for route handler
+            raise Exception(f"Failed to fetch dashboard metrics: {str(e)}")
+    
+    @staticmethod
+    def _get_empty_metrics() -> Dict[str, int]:
+        """Returns a dictionary with all metrics set to zero"""
+        return {
+            "totalGenerated": 0,
+            "totalSaved": 0,
+            "totalGeneratedScore": 0,
+            "youtubeCount": 0,
+            "redditCount": 0,
+            "instagramCount": 0,
+        }
+    
+    def get_platform_breakdown(self, user_id: int, platform: str) -> Optional[Dict]:
+        """
+        Get detailed breakdown for a specific platform (optional helper method)
+        
+        Args:
+            user_id: The ID of the user
+            platform: Platform name (YouTube, Reddit, Instagram)
+            
+        Returns:
+            Dictionary with platform-specific metrics or None
+        """
+        try:
+            is_user = EssentialHook.user_id == user_id
+            is_platform = EssentialHook.platform == platform
+            
+            query = self.db.session.query(
+                func.sum(case((EssentialHook.status == "Generated", 1), else_=0)).label("generated"),
+                func.sum(case((EssentialHook.status == "Saved", 1), else_=0)).label("saved"),
+                func.avg(case((EssentialHook.status == "Generated", EssentialHook.score), else_=None)).label("avg_score"),
+            ).filter(and_(is_user, is_platform))
+            
+            result = query.first()
+            
+            if not result:
+                return None
+                
+            return {
+                "platform": platform,
+                "generated": int(result.generated or 0),
+                "saved": int(result.saved or 0),
+                "averageScore": round(float(result.avg_score or 0), 2),
+            }
+            
+        except Exception as e:
+            raise Exception(f"Failed to fetch platform breakdown: {str(e)}")
