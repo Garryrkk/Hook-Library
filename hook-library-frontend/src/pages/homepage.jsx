@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Menu, X, Youtube, Camera, Mail, Mic, Video, Pen, Copy, Heart, ExternalLink, ChevronDown, Sparkles, TrendingUp, Clock, Filter } from 'lucide-react';
 import { API_URL } from "../utils/config";
+import { API_URL } from "../utils/config";
 
 // ============================================
 // NAVBAR COMPONENT
@@ -246,16 +247,14 @@ const StatsBar = () => {
 const PlatformCard = ({ platform, icon: Icon, description, color }) => {
   const [loading, setLoading] = useState(false);
 
-  const API_URL = "http://localhost:5000";
-
   const handleScrape = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/scrape/reddit`);
+      const res = await fetch(`${API_URL}/scrape/${endpoint}`);
       const data = await res.json();
-      console.log("Scraped:", data);
+      console.log(`Scraped (${endpoint}):`, data);
     } catch (err) {
-      console.error("Scrape error:", err);
+      console.error(`Scrape error (${endpoint}):`, err);
     }
     setLoading(false);
   };
@@ -525,21 +524,25 @@ export default function HomePage() {
       platform: "YouTube",
       icon: Youtube,
       description: "Scrape viral video hooks from the world's largest video platform",
-      color: "from-red-500 to-red-700"
+      color: "from-red-500 to-red-700",
+      endpoint: "youtube"
     },
     {
       platform: "Reddit",
       icon: Camera,
       description: "Extract engaging post titles and comments from trending subreddits",
-      color: "from-orange-500 to-red-500"
+      color: "from-orange-500 to-red-500",
+      endpoint: "reddit"
     },
     {
       platform: "Instagram",
       icon: Camera,
       description: "Capture attention-grabbing captions from top performing reels",
-      color: "from-purple-500 to-pink-500"
+      color: "from-purple-500 to-pink-500",
+      endpoint: "instagram"
     }
   ];
+
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
