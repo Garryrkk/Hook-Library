@@ -7,7 +7,7 @@ import io
 import openai
 from collections import defaultdict, Counter
 
-from .Settingsreportsschemas import (
+from ..Settings.Settingsreportsschemas import (
     UserSettingsUpdate, UserSettingsResponse, ReportGenerationRequest,
     WeeklyReportData, MonthlyReportData, AIGenerationRequest,
     AIGenerationResponse, GeneratedHook, BulkHookOperation,
