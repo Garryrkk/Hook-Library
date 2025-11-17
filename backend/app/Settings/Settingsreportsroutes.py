@@ -5,8 +5,8 @@ from typing import List, Optional
 import io
 import json
 
-from .settingsreportsservice import SettingsReportsService
-from .settingsreportsschemas import (
+from ..Settings.Settingsreportsservice import SettingsReportsService
+from ..Settings.Settingsreportsschemas import (
     UserSettingsUpdate, UserSettingsResponse, ReportGenerationRequest,
     WeeklyReportData, MonthlyReportData, AIGenerationRequest,
     AIGenerationResponse, SaveGeneratedHookRequest, BulkHookOperation,
