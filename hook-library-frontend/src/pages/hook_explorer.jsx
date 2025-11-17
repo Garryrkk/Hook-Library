@@ -1,13 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, Menu, X, Youtube, Camera, Heart, Copy, ExternalLink, 
+import {
+  Search, Menu, X, Youtube, Camera, Heart, Copy, ExternalLink,
   ChevronDown, Filter, TrendingUp, Clock, Sparkles, User, Bell,
   RefreshCw, Sun, Moon, Check, AlertCircle, RotateCcw, Eye,
   ThumbsUp, MessageCircle, Share2, Bookmark, ArrowUp
 } from 'lucide-react';
 import axios from "axios";
 import { API_URL } from "../utils/config";
+
+const API_URL = "http://localhost:5000";
+
+const handleScrape = async () => {
+  setLoading(true);
+  try {
+    const res = await fetch(`${API_URL}/scrape/reddit`);
+    const data = await res.json();
+    console.log("Scraped:", data);
+  } catch (err) {
+    console.error("Scrape error:", err);
+  }
+  setLoading(false);
+};
 
 
 // ============================================
@@ -29,9 +43,8 @@ const Navbar = ({ onSearch, darkMode, onThemeToggle }) => {
   };
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b-2 border-purple-500/20 ${
-      scrolled ? 'bg-[#0a0a0f]/90 backdrop-blur-xl shadow-lg shadow-purple-500/10' : 'bg-[#0a0a0f]/50 backdrop-blur-xl'
-    }`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b-2 border-purple-500/20 ${scrolled ? 'bg-[#0a0a0f]/90 backdrop-blur-xl shadow-lg shadow-purple-500/10' : 'bg-[#0a0a0f]/50 backdrop-blur-xl'
+      }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -91,9 +104,9 @@ const Navbar = ({ onSearch, darkMode, onThemeToggle }) => {
               </div>
             </button>
 
-            <button 
+            <button
               onClick={onThemeToggle}
-              className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors" 
+              className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors"
               aria-label="Toggle theme"
             >
               {darkMode ? <Sun size={18} className="text-gray-400" /> : <Moon size={18} className="text-gray-400" />}
@@ -317,12 +330,11 @@ const HookCard = ({ hook, onCopy, onSave, onViewSource, isSaved }) => {
             <span>{hook.platform}</span>
           </span>
         </div>
-        
+
         <button
           onClick={handleSave}
-          className={`p-2 rounded-lg transition-all ${
-            saved ? 'bg-pink-500/20 text-pink-400' : 'hover:bg-purple-500/20 text-gray-400'
-          }`}
+          className={`p-2 rounded-lg transition-all ${saved ? 'bg-pink-500/20 text-pink-400' : 'hover:bg-purple-500/20 text-gray-400'
+            }`}
           aria-label="Save hook"
         >
           <Heart size={18} className={saved ? 'fill-pink-400' : ''} />
@@ -374,11 +386,10 @@ const HookCard = ({ hook, onCopy, onSave, onViewSource, isSaved }) => {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleCopy}
-          className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-            copied 
-              ? 'bg-green-500/20 text-green-400 border border-green-500/50' 
+          className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${copied
+              ? 'bg-green-500/20 text-green-400 border border-green-500/50'
               : 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-white border border-purple-500/50 hover:from-pink-500/30 hover:to-purple-500/30'
-          }`}
+            }`}
         >
           <span className="flex items-center justify-center space-x-2">
             {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -633,7 +644,7 @@ export default function ExplorerPage() {
   const [darkMode, setDarkMode] = useState(true);
   const [toast, setToast] = useState(null);
   const [savedHooks, setSavedHooks] = useState(new Set());
-  
+
   const [filters, setFilters] = useState({
     search: '',
     platform: 'all',
@@ -776,7 +787,7 @@ export default function ExplorerPage() {
 
   const fetchHooksFromBackend = async () => {
     try {
-      const response = await axios.post("http://127.0.0.1:8000/reddit/scrape", null, {
+      const response = await axios.post(`${API_URL}/reddit/scrape`, null, {
         params: { subreddit: "Business", limit: 5 }
       });
       setAllHooks(response.data.data);
@@ -844,20 +855,20 @@ export default function ExplorerPage() {
 
   // Filter hooks
   const filteredHooks = allHooks.filter(hook => {
-    const matchesSearch = filters.search === '' || 
+    const matchesSearch = filters.search === '' ||
       hook.text.toLowerCase().includes(filters.search.toLowerCase()) ||
       hook.niche.toLowerCase().includes(filters.search.toLowerCase()) ||
       hook.tone.toLowerCase().includes(filters.search.toLowerCase());
-    
-    const matchesPlatform = filters.platform === 'all' || 
+
+    const matchesPlatform = filters.platform === 'all' ||
       hook.platform.toLowerCase() === filters.platform.toLowerCase();
-    
-    const matchesNiche = filters.niche === 'all' || 
+
+    const matchesNiche = filters.niche === 'all' ||
       hook.niche.toLowerCase() === filters.niche.toLowerCase();
-    
-    const matchesTone = filters.tone === 'all' || 
+
+    const matchesTone = filters.tone === 'all' ||
       hook.tone.toLowerCase() === filters.tone.toLowerCase();
-    
+
     return matchesSearch && matchesPlatform && matchesNiche && matchesTone;
   });
 
@@ -923,7 +934,7 @@ export default function ExplorerPage() {
         }
       `}</style>
 
-      <Navbar 
+      <Navbar
         onSearch={handleSearch}
         darkMode={darkMode}
         onThemeToggle={() => setDarkMode(!darkMode)}
@@ -938,7 +949,7 @@ export default function ExplorerPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12 mt-8"
           >
-            <h1 
+            <h1
               className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4"
               style={{ fontFamily: 'Orbitron, sans-serif' }}
             >
@@ -960,7 +971,7 @@ export default function ExplorerPage() {
           </motion.div>
 
           {/* Search & Filter Bar */}
-          <SearchFilterBar 
+          <SearchFilterBar
             filters={filters}
             onFilterChange={handleFilterChange}
             onReset={handleReset}
