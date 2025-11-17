@@ -5,7 +5,6 @@ import {
   Users, Github, Linkedin, Instagram, Mail, ArrowRight,
   Rocket, Star, Award, TrendingUp, MessageCircle, Coffee
 } from 'lucide-react';
-import { API_URL } from "../utils/config";
 
 
 

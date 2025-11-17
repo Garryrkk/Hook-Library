@@ -1,7 +1,140 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Search, Menu, X, Youtube, Camera, Mail, Mic, Video, Pen, Copy, Heart, ExternalLink, ChevronDown, Sparkles, TrendingUp, Clock, Filter } from 'lucide-react';
-import { API_URL } from "../utils/config";
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Menu, X, Youtube, Camera, Mail, Mic, Video, Pen, Copy, Heart, ExternalLink, ChevronDown, Sparkles, TrendingUp, Clock, Filter, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+
+// ============================================
+// API CONFIGURATION
+// ============================================
+const API_BASE_URL = 'http://localhost:8000/api';
+
+const api = {
+  // Reddit endpoints
+  reddit: {
+    scrape: (subreddit, limit = 50) => 
+      fetch(`${API_BASE_URL}/reddit/scrape?subreddit=${subreddit}&limit=${limit}`, { method: 'POST' }),
+    scrapeAll: () => 
+      fetch(`${API_BASE_URL}/reddit/scrape-all`, { method: 'POST' }),
+    getHooks: () => 
+      fetch(`${API_BASE_URL}/reddit/hooks`),
+    searchHooks: (niche) => 
+      fetch(`${API_BASE_URL}/reddit/hooks/search?niche=${niche}`)
+  },
+  
+  // YouTube endpoints
+  youtube: {
+    scrape: (channelId, limit = 10) => 
+      fetch(`${API_BASE_URL}/youtube/scrape?channel_id=${channelId}&limit=${limit}`, { method: 'POST' }),
+    scrapeAll: () => 
+      fetch(`${API_BASE_URL}/youtube/scrape-all`, { method: 'POST' })
+  },
+  
+  // Instagram endpoints
+  instagram: {
+    scrape: (username, limit = 5) => 
+      fetch(`${API_BASE_URL}/instagram/scrape?username=${username}&limit=${limit}`, { method: 'POST' }),
+    scrapeAll: () => 
+      fetch(`${API_BASE_URL}/instagram/scrape-all`, { method: 'POST' })
+  },
+  
+  // Settings & Reports endpoints
+  settings: {
+    get: (token) => 
+      fetch(`${API_BASE_URL}/settings`, { headers: { 'Authorization': `Bearer ${token}` }}),
+    update: (token, data) => 
+      fetch(`${API_BASE_URL}/settings`, { 
+        method: 'PUT', 
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+  },
+  
+  // Reports endpoints
+  reports: {
+    weekly: (token) => 
+      fetch(`${API_BASE_URL}/reports/weekly`, { headers: { 'Authorization': `Bearer ${token}` }}),
+    monthly: (token) => 
+      fetch(`${API_BASE_URL}/reports/monthly`, { headers: { 'Authorization': `Bearer ${token}` }}),
+    export: (token, reportType, format = 'csv') => 
+      fetch(`${API_BASE_URL}/reports/download/${reportType}?format=${format}`, { headers: { 'Authorization': `Bearer ${token}` }})
+  },
+  
+  // AI Generation endpoints
+  ai: {
+    generate: (token, data) => 
+      fetch(`${API_BASE_URL}/ai/generate`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }),
+    getCredits: (token) => 
+      fetch(`${API_BASE_URL}/ai/credits`, { headers: { 'Authorization': `Bearer ${token}` }}),
+    shufflePrompts: () => 
+      fetch(`${API_BASE_URL}/ai/shuffle-prompts`, { method: 'POST' })
+  },
+  
+  // Profile endpoints
+  profile: {
+    get: (token) => 
+      fetch(`${API_BASE_URL}/profile/`, { headers: { 'Authorization': `Bearer ${token}` }}),
+    getSummary: (token) => 
+      fetch(`${API_BASE_URL}/profile/summary`, { headers: { 'Authorization': `Bearer ${token}` }}),
+    getStats: (token) => 
+      fetch(`${API_BASE_URL}/profile/stats/quick`, { headers: { 'Authorization': `Bearer ${token}` }})
+  },
+  
+  // Collections endpoints
+  collections: {
+    getAll: (token) => 
+      fetch(`${API_BASE_URL}/profile/collections`, { headers: { 'Authorization': `Bearer ${token}` }}),
+    create: (token, data) => 
+      fetch(`${API_BASE_URL}/profile/collections`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+  }
+};
+
+// ============================================
+// NOTIFICATION COMPONENT
+// ============================================
+const Notification = ({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const icons = {
+    success: CheckCircle,
+    error: AlertCircle,
+    loading: Loader
+  };
+
+  const Icon = icons[type] || AlertCircle;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20, x: '-50%' }}
+      animate={{ opacity: 1, y: 0, x: '-50%' }}
+      exit={{ opacity: 0, y: -20, x: '-50%' }}
+      className={`fixed top-4 left-1/2 z-[100] px-6 py-4 rounded-lg shadow-lg backdrop-blur-sm border flex items-center space-x-3 ${
+        type === 'success' ? 'bg-green-500/20 border-green-500/50' :
+        type === 'error' ? 'bg-red-500/20 border-red-500/50' :
+        'bg-blue-500/20 border-blue-500/50'
+      }`}
+    >
+      <Icon size={20} className={`${
+        type === 'success' ? 'text-green-400' :
+        type === 'error' ? 'text-red-400' :
+        'text-blue-400 animate-spin'
+      }`} />
+      <span className="text-white text-sm">{message}</span>
+      <button onClick={onClose} className="ml-4 text-gray-400 hover:text-white">
+        <X size={16} />
+      </button>
+    </motion.div>
+  );
+};
 
 // ============================================
 // NAVBAR COMPONENT
@@ -17,11 +150,11 @@ const Navbar = ({ onNavigate }) => {
   }, []);
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[#0a0a0f]/80 backdrop-blur-lg shadow-lg shadow-purple-500/10' : 'bg-transparent'
-      }`}>
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled ? 'bg-[#0a0a0f]/80 backdrop-blur-lg shadow-lg shadow-purple-500/10' : 'bg-transparent'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <div className="flex items-center space-x-2">
             <div className="hero-gradient-text text-2xl font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>
               Hook Bank
@@ -29,27 +162,24 @@ const Navbar = ({ onNavigate }) => {
             <span className="text-xs text-gray-400 hidden sm:block">Viral Hook Library</span>
           </div>
 
-          {/* Desktop Nav */}
           <div className="hidden md:flex items-center space-x-8">
-            <button className="text-gray-300 hover:text-white transition-colors">Home</button>
-            <button className="text-gray-300 hover:text-white transition-colors">Dashboard</button>
-            <button className="text-gray-300 hover:text-white transition-colors">Explore</button>
-            <button className="text-gray-300 hover:text-white transition-colors">Scraper</button>
+            <button onClick={() => onNavigate('home')} className="text-gray-300 hover:text-white transition-colors">Home</button>
+            <button onClick={() => onNavigate('dashboard')} className="text-gray-300 hover:text-white transition-colors">Dashboard</button>
+            <button onClick={() => onNavigate('explore')} className="text-gray-300 hover:text-white transition-colors">Explore</button>
+            <button onClick={() => onNavigate('scraper')} className="text-gray-300 hover:text-white transition-colors">Scraper</button>
           </div>
 
-          {/* CTA Button */}
           <div className="hidden md:flex items-center space-x-4">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="px-6 py-2 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold shadow-lg"
-              aria-label="Explore Hooks"
+              onClick={() => onNavigate('explore')}
             >
               Explore Hooks
             </motion.button>
           </div>
 
-          {/* Mobile Menu Button */}
           <button
             className="md:hidden text-white"
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -59,20 +189,16 @@ const Navbar = ({ onNavigate }) => {
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {mobileOpen && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="md:hidden bg-[#0a0a0f]/95 backdrop-blur-lg rounded-lg mt-2 p-4 space-y-3"
           >
-            <button className="block w-full text-left text-gray-300 hover:text-white py-2">Home</button>
-            <button className="block w-full text-left text-gray-300 hover:text-white py-2">Dashboard</button>
-            <button className="block w-full text-left text-gray-300 hover:text-white py-2">Explore</button>
-            <button className="block w-full text-left text-gray-300 hover:text-white py-2">Scraper</button>
-            <button className="w-full px-6 py-2 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold">
-              Explore Hooks
-            </button>
+            <button onClick={() => { onNavigate('home'); setMobileOpen(false); }} className="block w-full text-left text-gray-300 hover:text-white py-2">Home</button>
+            <button onClick={() => { onNavigate('dashboard'); setMobileOpen(false); }} className="block w-full text-left text-gray-300 hover:text-white py-2">Dashboard</button>
+            <button onClick={() => { onNavigate('explore'); setMobileOpen(false); }} className="block w-full text-left text-gray-300 hover:text-white py-2">Explore</button>
+            <button onClick={() => { onNavigate('scraper'); setMobileOpen(false); }} className="block w-full text-left text-gray-300 hover:text-white py-2">Scraper</button>
           </motion.div>
         )}
       </div>
@@ -94,7 +220,6 @@ const Hero = ({ onExplore, onScrape }) => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0f] via-[#1a0a2e] to-[#0a0a0f]" />
       <div className="absolute inset-0 opacity-30">
         <div className="absolute inset-0" style={{
@@ -103,7 +228,6 @@ const Hero = ({ onExplore, onScrape }) => {
         }} />
       </div>
 
-      {/* Floating 3D Icons */}
       {icons.map(({ Icon, delay, x, y }, i) => (
         <motion.div
           key={i}
@@ -127,7 +251,6 @@ const Hero = ({ onExplore, onScrape }) => {
         </motion.div>
       ))}
 
-      {/* Hero Content */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
@@ -138,7 +261,7 @@ const Hero = ({ onExplore, onScrape }) => {
         >
           Hook Bank
         </motion.h1>
-
+        
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -147,7 +270,7 @@ const Hero = ({ onExplore, onScrape }) => {
         >
           Find hooks that go viral
         </motion.p>
-
+        
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -157,7 +280,6 @@ const Hero = ({ onExplore, onScrape }) => {
           Discover, analyze, and remix viral hooks from YouTube, Reddit, and Instagram. Auto-labeled, semantically searchable, ready to boost your content.
         </motion.p>
 
-        {/* CTAs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -172,7 +294,7 @@ const Hero = ({ onExplore, onScrape }) => {
           >
             Explore Dashboard
           </motion.button>
-
+          
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -183,7 +305,6 @@ const Hero = ({ onExplore, onScrape }) => {
           </motion.button>
         </motion.div>
 
-        {/* Microcopy */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -200,13 +321,7 @@ const Hero = ({ onExplore, onScrape }) => {
 // ============================================
 // STATS BAR COMPONENT
 // ============================================
-const StatsBar = () => {
-  const [stats, setStats] = useState({
-    totalHooks: 1247,
-    platforms: 3,
-    lastUpdate: 'Just now'
-  });
-
+const StatsBar = ({ stats }) => {
   const statCards = [
     { icon: Sparkles, label: 'Hooks in DB', value: stats.totalHooks.toLocaleString(), color: 'from-pink-500 to-purple-500' },
     { icon: TrendingUp, label: 'Platforms', value: stats.platforms, color: 'from-purple-500 to-blue-500' },
@@ -216,7 +331,7 @@ const StatsBar = () => {
   return (
     <section className="py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 overflow-x-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {statCards.map((stat, i) => (
             <motion.div
               key={i}
@@ -243,20 +358,12 @@ const StatsBar = () => {
 // ============================================
 // PLATFORM CARD COMPONENT
 // ============================================
-const PlatformCard = ({ platform, icon: Icon, description, color }) => {
+const PlatformCard = ({ platform, icon: Icon, description, color, onScrape }) => {
   const [loading, setLoading] = useState(false);
-
-  const API_URL = "http://localhost:5000";
 
   const handleScrape = async () => {
     setLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/scrape/reddit`);
-      const data = await res.json();
-      console.log("Scraped:", data);
-    } catch (err) {
-      console.error("Scrape error:", err);
-    }
+    await onScrape(platform);
     setLoading(false);
   };
 
@@ -264,21 +371,38 @@ const PlatformCard = ({ platform, icon: Icon, description, color }) => {
     <motion.div
       whileHover={{ scale: 1.05, y: -5 }}
       className="bg-gradient-to-br from-[#1a0a2e]/80 to-[#0a0a0f]/80 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6 relative overflow-hidden group cursor-pointer"
-      onClick={handleScrape}
     >
-      <div
-        className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-10 transition-opacity`}
-      />
+      <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-10 transition-opacity`} />
+      
       <div className="relative z-10">
-        <Icon className="w-12 h-12 mb-4 text-purple-400" />
-        <h3 className="text-xl font-semibold mb-2">{platform}</h3>
-        <p className="text-sm text-gray-400">{description}</p>
-        {loading && <p className="text-sm text-pink-400 mt-2">Scraping...</p>}
+        <div className="mb-4">
+          <Icon size={48} className="text-purple-400 group-hover:text-pink-400 transition-colors" />
+        </div>
+        
+        <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+          {platform}
+        </h3>
+        
+        <p className="text-gray-400 text-sm mb-4">{description}</p>
+        
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="w-full px-4 py-2 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold text-sm disabled:opacity-50"
+          onClick={handleScrape}
+          disabled={loading}
+        >
+          {loading ? (
+            <span className="flex items-center justify-center">
+              <Loader size={16} className="animate-spin mr-2" />
+              Scraping...
+            </span>
+          ) : 'Scrape Now'}
+        </motion.button>
       </div>
     </motion.div>
   );
 };
-
 
 // ============================================
 // SEARCH BAR COMPONENT
@@ -286,9 +410,14 @@ const PlatformCard = ({ platform, icon: Icon, description, color }) => {
 const SearchBar = ({ onSearch }) => {
   const [query, setQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    platform: 'all',
+    tone: 'all',
+    sort: 'newest'
+  });
 
   const handleSubmit = () => {
-    onSearch(query);
+    onSearch(query, filters);
   };
 
   return (
@@ -329,24 +458,36 @@ const SearchBar = ({ onSearch }) => {
             animate={{ opacity: 1, height: 'auto' }}
             className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4"
           >
-            <select className="px-4 py-2 bg-[#1a0a2e]/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500">
-              <option>All Platforms</option>
-              <option>YouTube</option>
-              <option>Reddit</option>
-              <option>Instagram</option>
+            <select 
+              value={filters.platform}
+              onChange={(e) => setFilters({...filters, platform: e.target.value})}
+              className="px-4 py-2 bg-[#1a0a2e]/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
+            >
+              <option value="all">All Platforms</option>
+              <option value="youtube">YouTube</option>
+              <option value="reddit">Reddit</option>
+              <option value="instagram">Instagram</option>
             </select>
-
-            <select className="px-4 py-2 bg-[#1a0a2e]/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500">
-              <option>All Tones</option>
-              <option>Motivational</option>
-              <option>Shock</option>
-              <option>Educational</option>
+            
+            <select 
+              value={filters.tone}
+              onChange={(e) => setFilters({...filters, tone: e.target.value})}
+              className="px-4 py-2 bg-[#1a0a2e]/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
+            >
+              <option value="all">All Tones</option>
+              <option value="motivational">Motivational</option>
+              <option value="shock">Shock</option>
+              <option value="educational">Educational</option>
             </select>
-
-            <select className="px-4 py-2 bg-[#1a0a2e]/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500">
-              <option>Sort: Newest</option>
-              <option>Most Popular</option>
-              <option>By Cluster</option>
+            
+            <select 
+              value={filters.sort}
+              onChange={(e) => setFilters({...filters, sort: e.target.value})}
+              className="px-4 py-2 bg-[#1a0a2e]/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
+            >
+              <option value="newest">Sort: Newest</option>
+              <option value="popular">Most Popular</option>
+              <option value="cluster">By Cluster</option>
             </select>
           </motion.div>
         )}
@@ -360,12 +501,20 @@ const SearchBar = ({ onSearch }) => {
 // ============================================
 const HookCard = ({ hook, onCopy, onFavorite, onOpen }) => {
   const [copied, setCopied] = useState(false);
+  const [favorited, setFavorited] = useState(false);
 
-  const handleCopy = () => {
+  const handleCopy = (e) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(hook.text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    onCopy?.();
+    onCopy?.(hook);
+  };
+
+  const handleFavorite = (e) => {
+    e.stopPropagation();
+    setFavorited(!favorited);
+    onFavorite?.(hook);
   };
 
   return (
@@ -382,18 +531,18 @@ const HookCard = ({ hook, onCopy, onFavorite, onOpen }) => {
         </span>
         <div className="flex space-x-2">
           <button
-            onClick={(e) => { e.stopPropagation(); handleCopy(); }}
+            onClick={handleCopy}
             className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors"
             aria-label="Copy hook"
           >
             <Copy size={16} className={copied ? 'text-green-400' : 'text-gray-400'} />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); onFavorite?.(); }}
+            onClick={handleFavorite}
             className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors"
             aria-label="Favorite hook"
           >
-            <Heart size={16} className="text-gray-400 hover:text-pink-400" />
+            <Heart size={16} className={favorited ? 'text-pink-400 fill-pink-400' : 'text-gray-400'} />
           </button>
         </div>
       </div>
@@ -403,8 +552,8 @@ const HookCard = ({ hook, onCopy, onFavorite, onOpen }) => {
       </p>
 
       <div className="flex flex-wrap gap-2 mb-3">
-        <span className="px-2 py-1 bg-pink-500/10 text-pink-300 rounded text-xs">{hook.tone}</span>
-        <span className="px-2 py-1 bg-blue-500/10 text-blue-300 rounded text-xs">{hook.niche}</span>
+        {hook.tone && <span className="px-2 py-1 bg-pink-500/10 text-pink-300 rounded text-xs">{hook.tone}</span>}
+        {hook.niche && <span className="px-2 py-1 bg-blue-500/10 text-blue-300 rounded text-xs">{hook.niche}</span>}
       </div>
 
       {hook.source && (
@@ -466,10 +615,16 @@ const Footer = () => {
 };
 
 // ============================================
-// MAIN HOMEPAGE COMPONENT
+// MAIN APP COMPONENT
 // ============================================
-export default function HomePage() {
-  const [sampleHooks] = useState([
+export default function App() {
+  const [notification, setNotification] = useState(null);
+  const [stats, setStats] = useState({
+    totalHooks: 1247,
+    platforms: 3,
+    lastUpdate: 'Just now'
+  });
+  const [hooks, setHooks] = useState([
     {
       id: 1,
       text: "How I made $10k in 30 days with this simple trick nobody talks about",
@@ -520,6 +675,135 @@ export default function HomePage() {
     }
   ]);
 
+  const [filteredHooks, setFilteredHooks] = useState(hooks);
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+  };
+
+  const closeNotification = () => {
+    setNotification(null);
+  };
+
+  // Scraping handlers
+  const handlePlatformScrape = async (platform) => {
+    showNotification(`Scraping ${platform}...`, 'loading');
+    
+    try {
+      let response;
+      
+      switch(platform.toLowerCase()) {
+        case 'youtube':
+          response = await api.youtube.scrapeAll();
+          break;
+        case 'reddit':
+          response = await api.reddit.scrapeAll();
+          break;
+        case 'instagram':
+          response = await api.instagram.scrapeAll();
+          break;
+        default:
+          throw new Error('Unknown platform');
+      }
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        showNotification(`✅ ${platform} scraped successfully!`, 'success');
+        // Refresh hooks after scraping
+        await loadHooks();
+      } else {
+        throw new Error(data.detail || 'Scraping failed');
+      }
+    } catch (error) {
+      showNotification(`❌ Error scraping ${platform}: ${error.message}`, 'error');
+    }
+  };
+
+  // Load hooks from API
+  const loadHooks = async () => {
+    try {
+      const response = await api.reddit.getHooks();
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          setHooks(data);
+          setFilteredHooks(data);
+          setStats(prev => ({
+            ...prev,
+            totalHooks: data.length,
+            lastUpdate: 'Just now'
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading hooks:', error);
+    }
+  };
+
+  // Search handler
+  const handleSearch = async (query, filters) => {
+    if (!query.trim()) {
+      setFilteredHooks(hooks);
+      return;
+    }
+
+    showNotification('Searching...', 'loading');
+
+    try {
+      // Try API search first
+      const response = await api.reddit.searchHooks(query);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setFilteredHooks(data);
+        showNotification(`Found ${data.length} hooks`, 'success');
+      } else {
+        // Fallback to local search
+        const filtered = hooks.filter(hook => 
+          hook.text.toLowerCase().includes(query.toLowerCase()) ||
+          hook.niche?.toLowerCase().includes(query.toLowerCase()) ||
+          hook.tone?.toLowerCase().includes(query.toLowerCase())
+        );
+        
+        // Apply filters
+        let results = filtered;
+        if (filters.platform !== 'all') {
+          results = results.filter(h => h.platform.toLowerCase() === filters.platform);
+        }
+        if (filters.tone !== 'all') {
+          results = results.filter(h => h.tone?.toLowerCase() === filters.tone);
+        }
+        
+        setFilteredHooks(results);
+        showNotification(`Found ${results.length} hooks locally`, 'success');
+      }
+    } catch (error) {
+      showNotification('Search error, showing local results', 'error');
+      setFilteredHooks(hooks);
+    }
+  };
+
+  // Hook actions
+  const handleCopyHook = (hook) => {
+    showNotification('Hook copied to clipboard!', 'success');
+  };
+
+  const handleFavoriteHook = (hook) => {
+    showNotification('Hook added to favorites!', 'success');
+  };
+
+  const handleOpenHook = (hook) => {
+    console.log('Opening hook:', hook);
+  };
+
+  // Navigation handler
+  const handleNavigate = (page) => {
+    console.log('Navigate to:', page);
+    showNotification(`Navigating to ${page}...`, 'loading');
+    setTimeout(() => closeNotification(), 1000);
+  };
+
   const platforms = [
     {
       platform: "YouTube",
@@ -540,6 +824,11 @@ export default function HomePage() {
       color: "from-purple-500 to-pink-500"
     }
   ];
+
+  // Load hooks on mount
+  useEffect(() => {
+    loadHooks();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
@@ -569,10 +858,26 @@ export default function HomePage() {
         }
       `}</style>
 
-      <Navbar />
-      <Hero />
-      <StatsBar />
+      {/* Notifications */}
+      <AnimatePresence>
+        {notification && (
+          <Notification
+            message={notification.message}
+            type={notification.type}
+            onClose={closeNotification}
+          />
+        )}
+      </AnimatePresence>
 
+      <Navbar onNavigate={handleNavigate} />
+      
+      <Hero 
+        onExplore={() => handleNavigate('explore')} 
+        onScrape={() => handleNavigate('scraper')} 
+      />
+      
+      <StatsBar stats={stats} />
+      
       {/* Platform Section */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
@@ -586,7 +891,7 @@ export default function HomePage() {
             <span className="hero-gradient-text">Supported Platforms</span>
           </motion.h2>
           <p className="text-gray-400 text-center mb-12">Scrape viral hooks from multiple platforms</p>
-
+          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {platforms.map((platform, i) => (
               <motion.div
@@ -596,14 +901,17 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
               >
-                <PlatformCard {...platform} />
+                <PlatformCard 
+                  {...platform} 
+                  onScrape={handlePlatformScrape}
+                />
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      <SearchBar onSearch={(q) => console.log('Search:', q)} />
+      <SearchBar onSearch={handleSearch} />
 
       {/* Hook Samples Grid */}
       <section className="py-16 px-4">
@@ -617,29 +925,48 @@ export default function HomePage() {
           >
             <span className="hero-gradient-text">Trending Hooks</span>
           </motion.h2>
-          <p className="text-gray-400 text-center mb-12">Discover what's working right now</p>
+          <p className="text-gray-400 text-center mb-12">
+            Discover what's working right now ({filteredHooks.length} hooks)
+          </p>
+          
+          {filteredHooks.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-400 mb-4">No hooks found. Try different search terms or scrape new content.</p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold"
+                onClick={() => handlePlatformScrape('Reddit')}
+              >
+                Scrape Reddit Now
+              </motion.button>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredHooks.map((hook) => (
+                  <HookCard
+                    key={hook.id}
+                    hook={hook}
+                    onCopy={handleCopyHook}
+                    onFavorite={handleFavoriteHook}
+                    onOpen={handleOpenHook}
+                  />
+                ))}
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sampleHooks.map((hook, i) => (
-              <HookCard
-                key={hook.id}
-                hook={hook}
-                onCopy={() => console.log('Copied:', hook.id)}
-                onFavorite={() => console.log('Favorited:', hook.id)}
-                onOpen={(h) => console.log('Opened:', h)}
-              />
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-8 py-3 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold"
-            >
-              View All Hooks
-            </motion.button>
-          </div>
+              <div className="text-center mt-12">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-8 py-3 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold"
+                  onClick={() => handleNavigate('explore')}
+                >
+                  View All Hooks
+                </motion.button>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
