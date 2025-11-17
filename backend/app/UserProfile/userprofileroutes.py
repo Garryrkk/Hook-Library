@@ -13,8 +13,8 @@ from UserProfile.userprofileschemas import (
     UsageStats, PlanInfo, ActivityItem, APIKeyCreate, APIKey,
     ConnectedAccount, ScrapeRecord
 )
-from database import get_db
-from auth import get_current_user  # Your auth dependency
+from ..core.database import get_db
+from ...Auth.authroutes import get_current_user  # Your auth dependency
 
 
 router = APIRouter(prefix="/api/profile", tags=["User Profile"])
