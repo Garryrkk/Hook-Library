@@ -11,3 +11,9 @@ export async function fetchHooks() {
   const res = await fetch(`${API_BASE}/api/hooks`);
   return res.json();
 }
+
+// ---- Export as api object ----
+export const api = {
+  testConnection,
+  fetchHooks,
+};

@@ -7,7 +7,6 @@ import {
   ThumbsUp, MessageCircle, Share2, Bookmark, ArrowUp
 } from 'lucide-react';
 import axios from "axios";
-import { API_URL } from "../utils/config";
 
 const API_URL = "http://localhost:5000";
 
