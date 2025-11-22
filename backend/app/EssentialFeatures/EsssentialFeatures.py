@@ -1,23 +1,26 @@
 # essential_features/EssentialFeatures.py
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import relationship
 from ..core.database import db
+
 
 class EssentialHook(db.Model):
     __tablename__ = "essential_hooks"
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(400), nullable=False)
-    text = db.Column(db.Text, nullable=True)        # hook content/body
-    platform = db.Column(db.String(64), nullable=True)  # YouTube, Reddit, Instagram...
-    niche = db.Column(db.String(128), nullable=True)
-    tone = db.Column(db.String(64), nullable=True)
+    id = Column(Integer, primary_key=True)
+    title = Column(String(400), nullable=False)
+    text = Column(Text, nullable=True)        # hook content/body
+    platform = Column(String(64), nullable=True)  # YouTube, Reddit, Instagram...
+    niche = Column(String(128), nullable=True)
+    tone = Column(String(64), nullable=True)
 
     # Counters / analytics
-    score = db.Column(db.Integer, default=0)
-    view_count = db.Column(db.Integer, default=0)
-    like_count = db.Column(db.Integer, default=0)
-    comment_count = db.Column(db.Integer, default=0)
-    copy_count = db.Column(db.Integer, default=0)
-    share_count = db.Column(db.Integer, default=0)
+    score = Column(Integer, default=0)
+    view_count = Column(Integer, default=0)
+    like_count = Column(Integer, default=0)
+    comment_count = Column(Integer, default=0)
+    copy_count = Column(Integer, default=0)
+    share_count = Column(Integer, default=0)
 
     def to_dict(self):
         return {
@@ -36,16 +39,15 @@ class EssentialHook(db.Model):
         }
 
 
-
 class EssentialPost(db.Model):
     __tablename__ = "essential_posts"
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(400), nullable=False)
-    content = db.Column(db.Text, nullable=True)
+    id = Column(Integer, primary_key=True)
+    title = Column(String(400), nullable=False)
+    content = Column(Text, nullable=True)
 
-    like_count = db.Column(db.Integer, default=0)
-    share_count = db.Column(db.Integer, default=0)
+    like_count = Column(Integer, default=0)
+    share_count = Column(Integer, default=0)
 
     def to_dict(self):
         return {
@@ -56,31 +58,31 @@ class EssentialPost(db.Model):
             "share_count": self.share_count
         }
 
+
 class EssentialPostLike(db.Model):
     __tablename__ = "essential_post_likes"
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    post_id = db.Column(db.Integer, db.ForeignKey("essential_posts.id"), nullable=False)
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    post_id = Column(Integer, ForeignKey("essential_posts.id"), nullable=False)
 
-    __table_args__ = (db.UniqueConstraint("user_id", "post_id", name="uq_user_post_like"),)
-
+    __table_args__ = (UniqueConstraint("user_id", "post_id", name="uq_user_post_like"),)
 
 
 class EssentialPostSave(db.Model):
     __tablename__ = "essential_post_saves"
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    post_id = db.Column(db.Integer, db.ForeignKey("essential_posts.id"), nullable=False)
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    post_id = Column(Integer, ForeignKey("essential_posts.id"), nullable=False)
 
-    __table_args__ = (db.UniqueConstraint("user_id", "post_id", name="uq_user_post_save"),)
+    __table_args__ = (UniqueConstraint("user_id", "post_id", name="uq_user_post_save"),)
 
 
 class EssentialHookComment(db.Model):
     __tablename__ = "essential_hook_comments"
-    id = db.Column(db.Integer, primary_key=True)
-    hook_id = db.Column(db.Integer, db.ForeignKey("essential_hooks.id"), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    comment_text = db.Column(db.Text, nullable=False)
+    id = Column(Integer, primary_key=True)
+    hook_id = Column(Integer, ForeignKey("essential_hooks.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    comment_text = Column(Text, nullable=False)
 
     def to_dict(self):
         return {
