@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Mic, Mail, Pen, MessageCircle, Instagram, Video } from 'lucide-react';
+import { Camera, Mic, Mail, Pen, MessageCircle, Instagram, Video, User } from 'lucide-react';
+import Dashboard from './pages/Dashboard';
+import HookExplorer from './pages/hook_explorer';
+import ScraperConsole from './pages/scraper_console';
+import ProfilePage from './pages/profile';
+import AboutPage from './pages/AboutPage';
 
 const HookBankLanding = () => {
+  const [currentPage, setCurrentPage] = useState('landing');
   const [floatingIcons, setFloatingIcons] = useState([]);
 
   useEffect(() => {
@@ -30,7 +36,30 @@ const HookBankLanding = () => {
     setFloatingIcons(positioned);
   }, []);
 
-  return (
+  // Navigation handler
+  const navigateTo = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Render different pages based on currentPage state
+  const renderPage = () => {
+    switch(currentPage) {
+      case 'scraper':
+        return <ScraperConsole />;
+      case 'dashboard':
+        return <Dashboard />;
+      case 'explorer':
+        return <HookExplorer />;
+      case 'profile':
+        return <ProfilePage />;
+      case 'about':
+        return <AboutPage />;
+      default:
+        return renderLandingPage();
+    }
+  };
+
+  const renderLandingPage = () => (
     <div style={{
       position: 'relative',
       minHeight: '100vh',
@@ -69,18 +98,24 @@ const HookBankLanding = () => {
         margin: '0 auto'
       }}>
         {/* Logo */}
-        <a href="/" style={{
-          fontSize: '36px',
-          fontWeight: 900,
-          background: 'linear-gradient(90deg, #da408dff 0%, #ff00ff 50%, #8000ff 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          textDecoration: 'none',
-          letterSpacing: '3px'
-        }}>
+        <button
+          onClick={() => navigateTo('landing')}
+          style={{
+            fontSize: '36px',
+            fontWeight: 900,
+            background: 'linear-gradient(90deg, #da408dff 0%, #ff00ff 50%, #8000ff 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            border: 'none',
+            cursor: 'pointer',
+            letterSpacing: '3px',
+            fontFamily: "'Orbitron', monospace",
+            padding: 0
+          }}
+        >
           HOOK BANK
-        </a>
+        </button>
 
         {/* Navigation Links */}
         <div style={{
@@ -88,45 +123,102 @@ const HookBankLanding = () => {
           alignItems: 'center',
           gap: '50px'
         }}>
-          <a href="#scraper" style={{
-            fontSize: '18px',
-            color: '#bb86fc',
-            textDecoration: 'none',
-            transition: 'color 0.3s',
-            letterSpacing: '1px'
-          }}>
+          <button
+            onClick={() => navigateTo('scraper')}
+            style={{
+              fontSize: '18px',
+              color: '#bb86fc',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'color 0.3s',
+              letterSpacing: '1px',
+              fontFamily: "'Orbitron', monospace"
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#ff0080'}
+            onMouseLeave={(e) => e.target.style.color = '#bb86fc'}
+          >
             Scraper-Console
-          </a>
-          <a href="#dashboard" style={{
-            fontSize: '18px',
-            color: '#bb86fc',
-            textDecoration: 'none',
-            transition: 'color 0.3s',
-            letterSpacing: '1px'
-          }}>
+          </button>
+          <button
+            onClick={() => navigateTo('dashboard')}
+            style={{
+              fontSize: '18px',
+              color: '#bb86fc',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'color 0.3s',
+              letterSpacing: '1px',
+              fontFamily: "'Orbitron', monospace"
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#ff0080'}
+            onMouseLeave={(e) => e.target.style.color = '#bb86fc'}
+          >
             Dashboard
-          </a>
-          <a href="#explorer" style={{
-            fontSize: '18px',
-            color: '#bb86fc',
-            textDecoration: 'none',
-            transition: 'color 0.3s',
-            letterSpacing: '1px'
-          }}>
+          </button>
+          <button
+            onClick={() => navigateTo('explorer')}
+            style={{
+              fontSize: '18px',
+              color: '#bb86fc',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'color 0.3s',
+              letterSpacing: '1px',
+              fontFamily: "'Orbitron', monospace"
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#ff0080'}
+            onMouseLeave={(e) => e.target.style.color = '#bb86fc'}
+          >
             Hook-Explorer
-          </a>
-          <a href="#about" style={{
-            fontSize: '18px',
-            color: '#bb86fc',
-            textDecoration: 'none',
-            transition: 'color 0.3s',
-            letterSpacing: '1px'
-          }}>
+          </button>
+          <button
+            onClick={() => navigateTo('about')}
+            style={{
+              fontSize: '18px',
+              color: '#bb86fc',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'color 0.3s',
+              letterSpacing: '1px',
+              fontFamily: "'Orbitron', monospace"
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#ff0080'}
+            onMouseLeave={(e) => e.target.style.color = '#bb86fc'}
+          >
             About
-          </a>
+          </button>
+          <button
+            onClick={() => navigateTo('profile')}
+            style={{
+              background: 'rgba(204, 0, 102, 0.2)',
+              border: '2px solid #cc0066',
+              borderRadius: '50%',
+              width: '45px',
+              height: '45px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              boxShadow: '0 0 15px rgba(204, 0, 102, 0.4)',
+              padding: 0
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 25px rgba(204, 0, 102, 0.8)';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 15px rgba(204, 0, 102, 0.4)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <User size={24} color="#ff00ff" />
+          </button>
         </div>
-
-
       </nav>
 
       {/* Hero Section */}
@@ -171,20 +263,23 @@ const HookBankLanding = () => {
             Never Run Out of Content Ideas Again
           </p>
 
-          <button style={{
-            padding: '20px 50px',
-            fontSize: '24px',
-            fontWeight: 700,
-            color: '#000',
-            background: '#cc0066',
-            border: 'none',
-            borderRadius: '50px',
-            cursor: 'pointer',
-            boxShadow: '0 0 20px rgba(204, 0, 102, 0.6)',
-            animation: 'pulseGlow 2s ease-in-out infinite',
-            letterSpacing: '2px',
-            fontFamily: "'Orbitron', monospace"
-          }}>
+          <button
+            onClick={() => navigateTo('scraper')}
+            style={{
+              padding: '20px 50px',
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#000',
+              background: '#cc0066',
+              border: 'none',
+              borderRadius: '50px',
+              cursor: 'pointer',
+              boxShadow: '0 0 20px rgba(204, 0, 102, 0.6)',
+              animation: 'pulseGlow 2s ease-in-out infinite',
+              letterSpacing: '2px',
+              fontFamily: "'Orbitron', monospace"
+            }}
+          >
             Start Creating →
           </button>
         </div>
@@ -334,17 +429,14 @@ const HookBankLanding = () => {
           }
         }
 
-        a:hover {
-          color: #ff0080 !important;
-        }
-
         button:hover {
           transform: scale(1.05);
-          box-shadow: 0 0 30px rgba(204, 0, 102, 0.8) !important;
         }
       `}</style>
     </div>
   );
+
+  return renderPage();
 };
 
 export default HookBankLanding;
