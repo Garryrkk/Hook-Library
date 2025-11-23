@@ -15,7 +15,7 @@ from .authschemas import (
     UserProfileResponse, SessionInfo, TwoFactorSetupResponse
 )
 from models import User, RefreshToken, PasswordResetToken, Session as SessionModel
-from app.core.config import settings
+from config import settings
 
 
 class AuthService:
@@ -26,7 +26,6 @@ class AuthService:
         self.ACCESS_TOKEN_EXPIRE_MINUTES = 30
         self.REFRESH_TOKEN_EXPIRE_DAYS = 30
         
-    # ==================== SIGN UP ====================
     
     def sign_up(self, signup_data: SignUpRequest, ip_address: str, user_agent: str) -> TokenResponse:
         """Register new user account"""

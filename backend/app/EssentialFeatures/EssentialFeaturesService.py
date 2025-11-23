@@ -1,34 +1,56 @@
-# essential_features/EssentialFeaturesService.py
+# essential_features/service.py
+"""
+Service layer for Essential Features module.
+Contains business logic for hooks, posts, comments, likes, and metrics.
+"""
 
-from ..core.database import get_db
 from sqlalchemy.orm import Session
-from sqlalchemy import func, case, and_
-from typing import Dict, Optional
-from fastapi import HTTPException
+from sqlalchemy import func, case, and_, or_
+from typing import Dict, Optional, List
+from fastapi import HTTPException, status
 
-from .EssentialFeaturesSchemas import (
+from .models import (
     EssentialHook,
     EssentialPost,
     EssentialPostLike,
     EssentialPostSave,
-    EssentialHookComment
+    EssentialHookComment,
+    User
 )
 
 
-def toggle_like_service(post_id, user):
-    """Toggle like status for a post"""
-    post = get_db.session.query(EssentialPost).filter(EssentialPost.id == post_id).first()
-    if not post:
-        raise HTTPException(status_code=404, detail="Post not found")
+# ========================
+# Post Services
+# ========================
 
-    existing_like = get_db.session.query(EssentialPostLike).filter_by(
+def toggle_like_service(db: Session, post_id: int, user: User) -> Dict:
+    """
+    Toggle like status for a post.
+    
+    Args:
+        db: Database session
+        post_id: ID of the post to like/unlike
+        user: Current authenticated user
+        
+    Returns:
+        Dictionary with message, is_liked status, and new like count
+    """
+    post = db.query(EssentialPost).filter(EssentialPost.id == post_id).first()
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found"
+        )
+
+    existing_like = db.query(EssentialPostLike).filter_by(
         user_id=user.id, post_id=post.id
     ).first()
 
     if existing_like:
-        get_db.session.delete(existing_like)
+        # Unlike the post
+        db.delete(existing_like)
         post.like_count = max(0, post.like_count - 1)
-        get_db.session.commit()
+        db.commit()
 
         return {
             "message": "Post unliked successfully.",
@@ -38,10 +60,9 @@ def toggle_like_service(post_id, user):
 
     # Like the post
     new_like = EssentialPostLike(user_id=user.id, post_id=post.id)
-    get_db.session.add(new_like)
-
+    db.add(new_like)
     post.like_count += 1
-    get_db.session.commit()
+    db.commit()
 
     return {
         "message": "Post liked successfully.",
@@ -50,156 +71,291 @@ def toggle_like_service(post_id, user):
     }
 
 
-def toggle_save_service(post_id, user):
-    """Toggle save status for a post"""
-    post = get_db.session.query(EssentialPost).filter(EssentialPost.id == post_id).first()
+def toggle_save_service(db: Session, post_id: int, user: User) -> Dict:
+    """
+    Toggle save/bookmark status for a post.
+    
+    Args:
+        db: Database session
+        post_id: ID of the post to save/unsave
+        user: Current authenticated user
+        
+    Returns:
+        Dictionary with message and is_saved status
+    """
+    post = db.query(EssentialPost).filter(EssentialPost.id == post_id).first()
     if not post:
-        raise HTTPException(status_code=404, detail="Post not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found"
+        )
 
-    existing_save = get_db.session.query(EssentialPostSave).filter_by(
+    existing_save = db.query(EssentialPostSave).filter_by(
         user_id=user.id, post_id=post.id
     ).first()
 
     if existing_save:
-        get_db.session.delete(existing_save)
-        get_db.session.commit()
+        # Unsave the post
+        db.delete(existing_save)
+        db.commit()
         return {"message": "Post unsaved.", "is_saved": False}
 
     # Save the post
-    get_db.session.add(EssentialPostSave(user_id=user.id, post_id=post.id))
-    get_db.session.commit()
+    new_save = EssentialPostSave(user_id=user.id, post_id=post.id)
+    db.add(new_save)
+    db.commit()
 
     return {"message": "Post saved.", "is_saved": True}
 
 
-def record_share_service(post_id):
-    """Record a share for a post"""
-    post = get_db.session.query(EssentialPost).filter(EssentialPost.id == post_id).first()
+def record_share_service(db: Session, post_id: int) -> Dict:
+    """
+    Record a share action for a post.
+    
+    Args:
+        db: Database session
+        post_id: ID of the post being shared
+        
+    Returns:
+        Dictionary with success message
+    """
+    post = db.query(EssentialPost).filter(EssentialPost.id == post_id).first()
     if not post:
-        raise HTTPException(status_code=404, detail="Post not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found"
+        )
     
     post.share_count += 1
-    get_db.session.commit()
+    db.commit()
 
     return {"message": "Share recorded."}
 
 
-def record_hook_view_service(hook_id):
-    """Record a view for a hook"""
-    hook = get_db.session.query(EssentialHook).filter(EssentialHook.id == hook_id).first()
-    if not hook:
-        raise HTTPException(status_code=404, detail="Hook not found")
+# ========================
+# Hook Services
+# ========================
+
+def record_hook_view_service(db: Session, hook_id: int) -> Dict:
+    """
+    Record a view for a hook.
     
-    hook.view_count = hook.view_count + 1
-    get_db.session.commit()
+    Args:
+        db: Database session
+        hook_id: ID of the hook being viewed
+        
+    Returns:
+        Dictionary with message and total views
+    """
+    hook = db.query(EssentialHook).filter(EssentialHook.id == hook_id).first()
+    if not hook:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Hook not found"
+        )
+    
+    hook.view_count += 1
+    db.commit()
     return {"message": "Hook view recorded.", "total_views": hook.view_count}
 
 
-def like_hook_service(hook_id):
-    """Like a hook"""
-    hook = get_db.session.query(EssentialHook).filter(EssentialHook.id == hook_id).first()
-    if not hook:
-        raise HTTPException(status_code=404, detail="Hook not found")
+def like_hook_service(db: Session, hook_id: int) -> Dict:
+    """
+    Increment like count for a hook.
     
-    hook.like_count = hook.like_count + 1
-    get_db.session.commit()
+    Args:
+        db: Database session
+        hook_id: ID of the hook being liked
+        
+    Returns:
+        Dictionary with message and total likes
+    """
+    hook = db.query(EssentialHook).filter(EssentialHook.id == hook_id).first()
+    if not hook:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Hook not found"
+        )
+    
+    hook.like_count += 1
+    db.commit()
     return {"message": "Hook liked.", "likes": hook.like_count}
 
 
-def add_hook_comment_service(hook_id, user_id, comment_text):
-    """Add a comment to a hook"""
-    # create comment row and increment comment_count
-    comment = EssentialHookComment(hook_id=hook_id, user_id=user_id, comment_text=comment_text)
-    get_db.session.add(comment)
+def add_hook_comment_service(db: Session, hook_id: int, user_id: int, comment_text: str) -> Dict:
+    """
+    Add a comment to a hook.
     
-    hook = get_db.session.query(EssentialHook).filter(EssentialHook.id == hook_id).first()
+    Args:
+        db: Database session
+        hook_id: ID of the hook to comment on
+        user_id: ID of the user adding the comment
+        comment_text: Content of the comment
+        
+    Returns:
+        Dictionary with message and total comments
+    """
+    hook = db.query(EssentialHook).filter(EssentialHook.id == hook_id).first()
     if not hook:
-        raise HTTPException(status_code=404, detail="Hook not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Hook not found"
+        )
     
-    hook.comment_count = hook.comment_count + 1
-    get_db.session.commit()
+    # Create comment
+    comment = EssentialHookComment(
+        hook_id=hook_id,
+        user_id=user_id,
+        comment_text=comment_text
+    )
+    db.add(comment)
+    
+    # Increment comment count
+    hook.comment_count += 1
+    db.commit()
+    
     return {"message": "Comment added.", "comments": hook.comment_count}
 
 
-def record_hook_copy_service(hook_id):
-    """Record a copy action for a hook"""
-    hook = get_db.session.query(EssentialHook).filter(EssentialHook.id == hook_id).first()
-    if not hook:
-        raise HTTPException(status_code=404, detail="Hook not found")
+def record_hook_copy_service(db: Session, hook_id: int) -> Dict:
+    """
+    Record a copy action for a hook.
     
-    hook.copy_count = hook.copy_count + 1
-    get_db.session.commit()
+    Args:
+        db: Database session
+        hook_id: ID of the hook being copied
+        
+    Returns:
+        Dictionary with message and total copies
+    """
+    hook = db.query(EssentialHook).filter(EssentialHook.id == hook_id).first()
+    if not hook:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Hook not found"
+        )
+    
+    hook.copy_count += 1
+    db.commit()
     return {"message": "Copy recorded.", "copies": hook.copy_count}
 
 
 def fetch_filtered_hooks_service(
-    search_query=None,
-    platform="All Platforms",
-    niche="All Niches",
-    tone="All Tones",
-    sort_by="Newest"
-):
-    """Fetch hooks with filters applied"""
-    query = get_db.session.query(EssentialHook)
+    db: Session,
+    search_query: Optional[str] = None,
+    platform: str = "All Platforms",
+    niche: str = "All Niches",
+    tone: str = "All Tones",
+    sort_by: str = "Newest"
+) -> List[Dict]:
+    """
+    Fetch hooks with filters and sorting applied.
+    
+    Args:
+        db: Database session
+        search_query: Text search query (searches title, text, niche)
+        platform: Platform filter
+        niche: Niche/category filter
+        tone: Tone filter
+        sort_by: Sorting method
+        
+    Returns:
+        List of hook dictionaries
+    """
+    query = db.query(EssentialHook)
 
+    # Apply search filter
     if search_query and search_query.strip():
-        q = f"%{search_query.strip()}%"
+        search_term = f"%{search_query.strip()}%"
         query = query.filter(
-            (EssentialHook.title.ilike(q)) |
-            (EssentialHook.text.ilike(q)) |
-            (EssentialHook.niche.ilike(q))
+            or_(
+                EssentialHook.title.ilike(search_term),
+                EssentialHook.text.ilike(search_term),
+                EssentialHook.niche.ilike(search_term)
+            )
         )
 
+    # Apply platform filter
     if platform and platform != "All Platforms":
         query = query.filter(EssentialHook.platform == platform)
 
+    # Apply niche filter
     if niche and niche != "All Niches":
         query = query.filter(EssentialHook.niche == niche)
 
+    # Apply tone filter
     if tone and tone != "All Tones":
         query = query.filter(EssentialHook.tone == tone)
 
-    # Sorting
+    # Apply sorting
     if sort_by == "Newest":
-        query = query.order_by(EssentialHook.id.desc())  # id desc approximates newest
+        query = query.order_by(EssentialHook.id.desc())
     elif sort_by == "Most Popular":
         query = query.order_by(EssentialHook.view_count.desc())
     elif sort_by == "Most Copied":
         query = query.order_by(EssentialHook.copy_count.desc())
     elif sort_by == "Highest Engagement":
-        # engagement = like_count + comment_count + view_count (get_db expression)
-        query = query.order_by((EssentialHook.like_count + EssentialHook.comment_count + EssentialHook.view_count).desc())
+        # Calculate engagement as sum of interactions
+        engagement = (
+            EssentialHook.like_count +
+            EssentialHook.comment_count +
+            EssentialHook.view_count
+        )
+        query = query.order_by(engagement.desc())
     else:
         query = query.order_by(EssentialHook.id.desc())
 
     hooks = query.all()
-    return [h.to_dict() for h in hooks]
+    return [hook.to_dict() for hook in hooks]
 
 
-def reset_filters_service():
-    """Reset all filters and return all hooks"""
-    # just return all hooks ordered by id desc
-    hooks = get_db.session.query(EssentialHook).order_by(EssentialHook.id.desc()).all()
-    return [h.to_dict() for h in hooks]
+def reset_filters_service(db: Session) -> List[Dict]:
+    """
+    Reset all filters and return all hooks.
+    
+    Args:
+        db: Database session
+        
+    Returns:
+        List of all hook dictionaries
+    """
+    hooks = db.query(EssentialHook).order_by(EssentialHook.id.desc()).all()
+    return [hook.to_dict() for hook in hooks]
 
 
-def refresh_hooks_service():
-    """Refresh and return all hooks"""
-    hooks = get_db.session.query(EssentialHook).order_by(EssentialHook.id.desc()).all()
-    return [h.to_dict() for h in hooks]
+def refresh_hooks_service(db: Session) -> List[Dict]:
+    """
+    Refresh and return all hooks.
+    
+    Args:
+        db: Database session
+        
+    Returns:
+        List of all hook dictionaries
+    """
+    hooks = db.query(EssentialHook).order_by(EssentialHook.id.desc()).all()
+    return [hook.to_dict() for hook in hooks]
 
 
-def get_dashboard_metrics_service():
-    """Get dashboard metrics for all hooks"""
-    # Total hooks (no time fields involved)
-    total_hooks = get_db.session.query(EssentialHook).count()
+def get_dashboard_metrics_service(db: Session) -> Dict:
+    """
+    Get basic dashboard metrics (no user filtering).
+    
+    Args:
+        db: Database session
+        
+    Returns:
+        Dictionary with total hooks, YouTube count, and total score
+    """
+    # Total hooks
+    total_hooks = db.query(EssentialHook).count()
 
     # Total score of all hooks
-    total_score_result = get_db.session.query(func.sum(EssentialHook.score)).scalar()
+    total_score_result = db.query(func.sum(EssentialHook.score)).scalar()
     total_score = total_score_result or 0
 
     # Count YouTube hooks
-    youtube_count = get_db.session.query(EssentialHook).filter(
+    youtube_count = db.query(EssentialHook).filter(
         EssentialHook.platform == "YouTube"
     ).count()
 
@@ -210,11 +366,21 @@ def get_dashboard_metrics_service():
     }
 
 
+# ========================
+# Metrics Service Class
+# ========================
+
 class MetricsService:
-    """Service class for handling dashboard metrics operations"""
+    """Service class for handling user-specific dashboard metrics operations."""
     
-    def __init__(self, get_db):
-        self.get_db = get_db
+    def __init__(self, db: Session):
+        """
+        Initialize metrics service.
+        
+        Args:
+            db: Database session
+        """
+        self.db = db
     
     def get_dashboard_metrics(self, user_id: int) -> Dict[str, int]:
         """
@@ -242,7 +408,7 @@ class MetricsService:
             is_saved = EssentialHook.status == "Saved"
 
             # Build aggregation query with conditional counting
-            query = self.get_db.session.query(
+            query = self.db.query(
                 # Total counts across all platforms
                 func.sum(case((is_generated, 1), else_=0)).label("total_generated"),
                 func.sum(case((is_saved, 1), else_=0)).label("total_saved"),
@@ -277,7 +443,7 @@ class MetricsService:
     
     @staticmethod
     def _get_empty_metrics() -> Dict[str, int]:
-        """Returns a dictionary with all metrics set to zero"""
+        """Returns a dictionary with all metrics set to zero."""
         return {
             "totalGenerated": 0,
             "totalSaved": 0,
@@ -289,7 +455,7 @@ class MetricsService:
     
     def get_platform_breakdown(self, user_id: int, platform: str) -> Optional[Dict]:
         """
-        Get detailed breakdown for a specific platform (optional helper method)
+        Get detailed breakdown for a specific platform.
         
         Args:
             user_id: The ID of the user
@@ -302,7 +468,7 @@ class MetricsService:
             is_user = EssentialHook.user_id == user_id
             is_platform = EssentialHook.platform == platform
             
-            query = self.get_db.session.query(
+            query = self.db.query(
                 func.sum(case((EssentialHook.status == "Generated", 1), else_=0)).label("generated"),
                 func.sum(case((EssentialHook.status == "Saved", 1), else_=0)).label("saved"),
                 func.avg(case((EssentialHook.status == "Generated", EssentialHook.score), else_=None)).label("avg_score"),
@@ -310,7 +476,7 @@ class MetricsService:
             
             result = query.first()
             
-            if not result:
+            if not result or result.generated == 0:
                 return None
                 
             return {
