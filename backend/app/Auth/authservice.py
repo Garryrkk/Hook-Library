@@ -14,7 +14,7 @@ from .authschemas import (
     PasswordResetConfirm, ChangePasswordRequest, DeleteAccountRequest,
     UserProfileResponse, SessionInfo, TwoFactorSetupResponse
 )
-from models import User, RefreshToken, PasswordResetToken, Session as SessionModel
+from app.models import User, RefreshToken, PasswordResetToken, Session as SessionModel
 from core.config import settings
 
 
