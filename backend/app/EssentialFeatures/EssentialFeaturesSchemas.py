@@ -1,98 +1,15 @@
-# essential_features/models.py
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship
-from ..core.database import Base
-
-
-class EssentialHook(Base):
-    __tablename__ = "essential_hooks"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(255), nullable=False)
-    score = Column(Integer, default=0)
-    platform = Column(String(50))
-
-    # Relationships
-    comments = relationship("EssentialHookComment", back_populates="hook")
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "platform": self.platform,
-            "score": self.score
-        }
-
-
-class EssentialPost(Base):
-    __tablename__ = "essential_posts"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(400), nullable=False)
-    content = Column(Text, nullable=True)
-    like_count = Column(Integer, default=0)
-    share_count = Column(Integer, default=0)
-
-    # Relationships
-    likes = relationship("EssentialPostLike", back_populates="post")
-    saves = relationship("EssentialPostSave", back_populates="post")
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "content": self.content,
-            "like_count": self.like_count,
-            "share_count": self.share_count
-        }
-
-
-class EssentialPostLike(Base):
-    __tablename__ = "essential_post_likes"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    post_id = Column(Integer, ForeignKey("essential_posts.id"))
-
-    # Relationships
-    user = relationship("User")
-    post = relationship("EssentialPost", back_populates="likes")
-
-    __table_args__ = (
-        UniqueConstraint("user_id", "post_id", name="unique_user_post_like"),
-    )
-
-
-class EssentialPostSave(Base):
-    __tablename__ = "essential_post_saves"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    post_id = Column(Integer, ForeignKey("essential_posts.id"))
-
-    # Relationships
-    user = relationship("User")
-    post = relationship("EssentialPost", back_populates="saves")
-
-    __table_args__ = (
-        UniqueConstraint("user_id", "post_id", name="unique_user_post_save"),
-    )
-
-
-class EssentialHookComment(Base):
-    __tablename__ = "essential_hook_comments"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    hook_id = Column(Integer, ForeignKey("essential_hooks.id"))
-    user_id = Column(Integer, ForeignKey("users.id"))
-    comment_text = Column(Text, nullable=False)
-    
-    # Relationships
-    hook = relationship("EssentialHook", back_populates="comments")
-    user = relationship("User")
-
-
 # essential_features/schemas.py
+# Re-export SQLAlchemy models defined in EsssentialFeatures.py so service modules
+# that import model names from this module continue to work.
+from .EsssentialFeatures import (
+    User,
+    EssentialHook,
+    EssentialPost,
+    EssentialPostLike,
+    EssentialPostSave,
+    EssentialHookComment,
+)
+
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Dict, Any, Literal
 from enum import Enum

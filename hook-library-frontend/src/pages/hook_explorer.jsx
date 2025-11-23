@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, User, Menu, X, Filter, Youtube, MessageCircle, Instagram, Heart, Copy, ExternalLink, TrendingUp, RefreshCw, ChevronUp, Check, AlertCircle, BarChart3, Clock } from 'lucide-react';
+import { Search, Bell, User, Menu, X, Filter, Youtube, MessageCircle, Instagram, Heart, Copy, ExternalLink, TrendingUp, RefreshCw, ChevronUp, Check, AlertCircle, BarChart3, Clock, Github } from 'lucide-react';
 
 const HookExplorer = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,27 +77,6 @@ const HookExplorer = () => {
       showToastNotification('Saved successfully!', 'success');
     }
     setSavedHooks(newSaved);
-  };
-
-  const viewHook = (hook) => {
-    setRecentlyViewed(prev => {
-      const filtered = prev.filter(h => h.id !== hook.id);
-      return [hook, ...filtered].slice(0, 5);
-    });
-  };
-
-  const showToastNotification = (message, type) => {
-    setShowToast({ message, type });
-    setTimeout(() => setShowToast(null), 3000);
-  };
-
-  const resetFilters = () => {
-    setSelectedPlatform('All');
-    setSelectedNiche('All');
-    setSelectedTone('All');
-    setSortBy('newest');
-    setSearchQuery('');
-    showToastNotification('Filters reset', 'info');
   };
 
   const getPlatformIcon = (platform) => {
