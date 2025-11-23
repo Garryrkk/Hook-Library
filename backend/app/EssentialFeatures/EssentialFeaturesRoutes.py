@@ -3,13 +3,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body
 from fastapi.responses import JSONResponse
 from http import HTTPStatus
-from EssentialFeatures.EssentialFeaturesService import MetricsService
-from EssentialFeatures.EssentialFeaturesSchemas import MetricsResponseSchema, ErrorResponseSchema, PlatformBreakdownSchema
-from core.database import db
+from .EssentialFeaturesService import MetricsService
+from .EssentialFeaturesSchemas import MetricsResponseSchema, ErrorResponseSchema, PlatformBreakdownSchema
+from ..core.database import get_db
 from functools import wraps
 from typing import Optional, Dict, Any
 
-from EssentialFeatures.EssentialFeaturesService import (
+from .EssentialFeaturesService import (
     toggle_like_service,
     toggle_save_service,
     record_share_service,
@@ -26,9 +26,9 @@ from EssentialFeatures.EssentialFeaturesService import (
 metrics_bp = APIRouter(prefix='/api/v1', tags=['metrics'])
 
 # Initialize service
-metrics_service = MetricsService(db)
+metrics_service = MetricsService(get_db)
 
-from EssentialFeaturesSchemas import EssentialHook, EssentialPost, EssentialHookComment
+from .EssentialFeaturesSchemas import EssentialHook, EssentialPost, EssentialHookComment
 essential_features_bp = APIRouter(tags=['essential_features'])
 hook_schema = EssentialHook
 hooks_schema = EssentialHook(many=True)

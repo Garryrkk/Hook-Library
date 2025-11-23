@@ -11,6 +11,7 @@ const HookBankLanding = () => {
   const [floatingIcons, setFloatingIcons] = useState([]);
 
   useEffect(() => {
+    fetch("http://localhost:8000/api/some-endpoint")  // your FastAPI endpoint
     const icons = [
       { Icon: Camera, color: '#ff00ff', id: 1 },
       { Icon: Mic, color: '#00ffff', id: 2 },
