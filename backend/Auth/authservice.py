@@ -15,7 +15,7 @@ from .authschemas import (
     UserProfileResponse, SessionInfo, TwoFactorSetupResponse
 )
 from models import User, RefreshToken, PasswordResetToken, Session as SessionModel
-from config import settings
+from app.core.config import settings
 
 
 class AuthService:

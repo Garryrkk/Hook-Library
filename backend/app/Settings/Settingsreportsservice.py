@@ -291,38 +291,91 @@ class SettingsReportsService:
         
         # Call OpenAI API
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert content hook writer. Generate compelling, attention-grabbing hooks based on the user's specifications."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=request.temperature,
-                n=request.num_variations
-            )
-            
-            # Parse generated hooks
             generated_hooks = []
-            for i, choice in enumerate(response.choices):
-                hook_content = choice.message.content.strip()
-                
-                generated_hook = GeneratedHook(
-                    id=f"gen_{user_id}_{int(datetime.utcnow().timestamp())}_{i}",
-                    content=hook_content,
-                    hook_type=request.hook_type,
-                    tone=request.tone,
-                    niche=request.niche,
-                    confidence_score=self._calculate_confidence_score(hook_content),
-                    engagement_prediction=self._predict_engagement(hook_content),
-                    explanation=self._generate_explanation(hook_content, request.hook_type)
+            # Prefer oLlama (local Ollama) if available, otherwise use OpenAI
+            if AI_BACKEND == "ollama":
+                # Try local Ollama HTTP API at default port
+                try:
+                    ollama_url = getattr(ollama, "API_URL", None) or "http://127.0.0.1:11434/api/generate"
+                    payload = {
+                        "model": getattr(request, "model", "llama2"),
+                        "prompt": prompt,
+                        "temperature": request.temperature,
+                        "n": request.num_variations
+                    }
+                    r = requests.post(ollama_url, json=payload, timeout=30)
+                    r.raise_for_status()
+                    # Try parse json response, otherwise use text
+                    try:
+                        data = r.json()
+                        # attempt to extract textual output from common keys
+                        text_out = None
+                        for key in ("output", "result", "text", "response", "completions"):
+                            if isinstance(data, dict) and key in data:
+                                text_out = data[key]
+                                break
+                        if text_out is None:
+                            # fallback stringify
+                            text_out = json.dumps(data)
+                    except Exception:
+                        text_out = r.text
+
+                    # Split by newlines and take top N non-empty lines as hooks
+                    lines = [ln.strip() for ln in str(text_out).splitlines() if ln.strip()]
+                    for i, hook_content in enumerate(lines[: request.num_variations]):
+                        generated_hooks.append(GeneratedHook(
+                            id=f"gen_{user_id}_{int(datetime.utcnow().timestamp())}_{i}",
+                            content=hook_content,
+                            hook_type=request.hook_type,
+                            tone=request.tone,
+                            niche=request.niche,
+                            confidence_score=self._calculate_confidence_score(hook_content),
+                            engagement_prediction=self._predict_engagement(hook_content),
+                            explanation=self._generate_explanation(hook_content, request.hook_type)
+                        ))
+                except Exception as ex:
+                    raise Exception(f"oLlama generation failed: {ex}")
+            elif AI_BACKEND == "openai":
+                response = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are an expert content hook writer. Generate compelling, attention-grabbing hooks based on the user's specifications."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    temperature=request.temperature,
+                    n=request.num_variations
                 )
-                generated_hooks.append(generated_hook)
+                # Parse generated hooks
+                for i, choice in enumerate(response.choices):
+                    # Backwards compatible access for both ChatCompletion and other response shapes
+                    hook_content = None
+                    if hasattr(choice, "message") and getattr(choice.message, "content", None):
+                        hook_content = choice.message.content.strip()
+                    elif isinstance(choice, dict):
+                        # try common dict keys
+                        hook_content = (choice.get("message", {}) or {}).get("content") or choice.get("text")
+                        if hook_content:
+                            hook_content = hook_content.strip()
+                    if not hook_content:
+                        continue
+                    generated_hooks.append(GeneratedHook(
+                        id=f"gen_{user_id}_{int(datetime.utcnow().timestamp())}_{i}",
+                        content=hook_content,
+                        hook_type=request.hook_type,
+                        tone=request.tone,
+                        niche=request.niche,
+                        confidence_score=self._calculate_confidence_score(hook_content),
+                        engagement_prediction=self._predict_engagement(hook_content),
+                        explanation=self._generate_explanation(hook_content, request.hook_type)
+                    ))
+            else:
+                raise Exception("No AI backend available. Install and run Ollama locally or configure the OpenAI client.")
             
             generation_time = (datetime.utcnow() - start_time).total_seconds()
             
