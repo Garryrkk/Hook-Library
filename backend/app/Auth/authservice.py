@@ -14,8 +14,13 @@ from .authschemas import (
     PasswordResetConfirm, ChangePasswordRequest, DeleteAccountRequest,
     UserProfileResponse, SessionInfo, TwoFactorSetupResponse
 )
+<<<<<<< HEAD
 from .models import User, RefreshToken, PasswordResetToken, Session as SessionModel
 from core.config import settings
+=======
+from models import User, RefreshToken, PasswordResetToken, Session as SessionModel
+from config import settings
+>>>>>>> 95ee823a58c4a1ef40a8c09a2f5470cc14f99e5a
 
 
 class AuthService:

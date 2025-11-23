@@ -14,7 +14,7 @@ from .userprofileschemas import (
     ConnectedAccount, ScrapeRecord
 )
 from ..core.database import get_db
-from app.Auth.authroutes import get_current_user  # Your auth dependency
+from ...Auth.authroutes import get_current_user  # Your auth dependency
 
 
 router = APIRouter(prefix="/api/profile", tags=["User Profile"])

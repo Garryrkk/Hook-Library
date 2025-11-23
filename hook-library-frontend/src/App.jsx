@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Mic, Mail, Pen, MessageCircle, Instagram, Video, User } from 'lucide-react';
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/dashboard';
 import HookExplorer from './pages/hook_explorer';
 import ScraperConsole from './pages/scraper_console';
 import ProfilePage from './pages/profile';
@@ -354,6 +354,9 @@ const HookBankLanding = () => {
                   left: '50%',
                   top: '50%',
                   transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                  // expose CSS variables so the `orbit` keyframes can reference them
+                  '--x': `${x}px`,
+                  '--y': `${y}px`,
                   boxShadow: `0 0 30px ${colors[idx]}`,
                   animation: `orbit 25s linear ${idx * 0.5}s infinite`
                 }}

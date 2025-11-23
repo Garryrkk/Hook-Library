@@ -12,8 +12,8 @@ from .authschemas import (
     TwoFactorVerifyRequest, TwoFactorLoginRequest, UserProfileResponse,
     SessionInfo, LogoutAllRequest, TwoFactorSetupResponse
 )
-from ..app.core.database import get_db
-from ..app.core.config import settings
+from app.core.database import get_db
+from app.core.config import settings
 
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])

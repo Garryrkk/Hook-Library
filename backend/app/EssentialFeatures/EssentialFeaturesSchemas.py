@@ -1,9 +1,4 @@
 # essential_features/schemas.py
-"""
-Pydantic schemas for request/response validation in Essential Features module.
-Defines data validation, serialization, and API documentation models.
-"""
-
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Dict, Any, Literal, List
 from enum import Enum

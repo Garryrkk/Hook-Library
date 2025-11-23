@@ -34,27 +34,24 @@ from .EssentialFeaturesService import (
     reset_filters_service,
     add_hook_comment_service,
     like_hook_service,
-    fetch_filtered_hooks_service,
-    MetricsService
+    fetch_filtered_hooks_service
 )
 
+metrics_bp = APIRouter(prefix='/api/v1', tags=['metrics'])
 
-# ========================
-# Router Initialization
-# ========================
+# Initialize service
+metrics_service = MetricsService(get_db)
 
-# Main features router
-essential_features_bp = APIRouter(prefix="/api", tags=["Essential Features"])
+from .EssentialFeaturesSchemas import EssentialHook, EssentialPost, EssentialHookComment
+essential_features_bp = APIRouter(tags=['essential_features'])
+hook_schema = EssentialHook
+hooks_schema = EssentialHook(many=True)
+post_schema = EssentialPost
+comment_schema = EssentialHookComment
 
-# Metrics router
-metrics_bp = APIRouter(prefix="/api/v1", tags=["Metrics"])
 
-
-# ========================
-# Authentication Dependencies
-# ========================
-
-async def get_current_user(request: Request) -> Optional[User]:
+# Dependency for JWT authentication (you'll need to implement this based on your auth setup)
+async def get_current_user(request: Request):
     """
     Dependency to get current authenticated user.
     
@@ -316,24 +313,27 @@ async def get_user_metrics(
         metrics_service = MetricsService(db)
         metrics_data = metrics_service.get_dashboard_metrics(user.id)
         
-        return JSONResponse(
-            content={
-                "status": "success",
-                "data": metrics_data
-            },
-            status_code=status.HTTP_200_OK
-        )
+        # Validate and serialize response
+        schema = MetricsResponseSchema()
+        response = schema.dump({
+            "status": "success",
+            "data": metrics_data
+        })
+        
+        return JSONResponse(content=response, status_code=HTTPStatus.OK)
         
     except Exception as e:
-        return JSONResponse(
-            content={
-                "status": "error",
-                "message": "Failed to retrieve dashboard metrics",
-                "code": "METRICS_FETCH_FAILED",
-                "details": {"error": str(e)}
-            },
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        # Log error (use your logging system)
+        # logger.error(f"Error fetching metrics for user {user_id}: {str(e)}")
+        
+        error_schema = ErrorResponseSchema()
+        error_response = error_schema.dump({
+            "status": "error",
+            "message": "Failed to retrieve dashboard metrics",
+            "code": "METRICS_FETCH_FAILED"
+        })
+        
+        return JSONResponse(content=error_response, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
 @metrics_bp.get(
@@ -383,24 +383,23 @@ async def get_platform_metrics(
                 status_code=status.HTTP_404_NOT_FOUND
             )
         
-        return JSONResponse(
-            content={
-                "status": "success",
-                "data": platform_data
-            },
-            status_code=status.HTTP_200_OK
-        )
+        schema = PlatformBreakdownSchema()
+        response = schema.dump({
+            "status": "success",
+            "data": platform_data
+        })
+        
+        return JSONResponse(content=response, status_code=HTTPStatus.OK)
         
     except Exception as e:
-        return JSONResponse(
-            content={
-                "status": "error",
-                "message": "Failed to retrieve platform metrics",
-                "code": "PLATFORM_METRICS_FETCH_FAILED",
-                "details": {"error": str(e)}
-            },
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        error_schema = ErrorResponseSchema()
+        error_response = error_schema.dump({
+            "status": "error",
+            "message": "Failed to retrieve platform metrics",
+            "code": "PLATFORM_METRICS_FETCH_FAILED"
+        })
+        
+        return JSONResponse(content=error_response, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
 @metrics_bp.get(
@@ -438,42 +437,35 @@ async def get_metrics_summary(
         )
         
     except Exception as e:
-        return JSONResponse(
-            content={
-                "status": "error",
-                "message": "Failed to retrieve metrics summary",
-                "code": "SUMMARY_FETCH_FAILED",
-                "details": {"error": str(e)}
-            },
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        error_schema = ErrorResponseSchema()
+        error_response = error_schema.dump({
+            "status": "error",
+            "message": "Failed to retrieve metrics summary",
+            "code": "SUMMARY_FETCH_FAILED"
+        })
+        
+        return JSONResponse(content=error_response, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
-# ========================
-# Error Handlers (exported)
-# NOTE: APIRouter does not support `exception_handler` decorator. These
-# handler functions are provided for registration on the FastAPI `app`
-# via `app.add_exception_handler` (see `app/main.py`).
-# ========================
-
-async def not_found_handler(request: Request, exc: HTTPException):
-    """Handle 404 errors."""
-    # Only handle actual 404 HTTPExceptions; re-raise others
-    if getattr(exc, "status_code", None) == status.HTTP_404_NOT_FOUND:
-        return JSONResponse(
-            content={
-                "status": "error",
-                "message": "Resource not found",
-                "code": "NOT_FOUND"
-            },
-            status_code=status.HTTP_404_NOT_FOUND
-        )
+# Error handlers for the blueprint
+@metrics_bp.exception_handler(404)
+async def not_found(request: Request, exc: HTTPException):
+    """Handle 404 errors within this blueprint"""
+    return JSONResponse(
+        content={
+            "status": "error",
+            "message": "Resource not found",
+            "code": "NOT_FOUND"
+        },
+        status_code=HTTPStatus.NOT_FOUND
+    )
 
     raise exc
 
 
-async def internal_error_handler(request: Request, exc: Exception):
-    """Handle internal server errors (500)."""
+@metrics_bp.exception_handler(500)
+async def internal_error(request: Request, exc: HTTPException):
+    """Handle 500 errors within this blueprint"""
     return JSONResponse(
         content={
             "status": "error",
