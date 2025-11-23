@@ -1,18 +1,19 @@
-# essential_features/EssentialFeatures.py
-from ..core.database import db
-from EssentialFeatures.EsssentialFeatures import EssentialHook, EssentialPost, EssentialHookComment
-from marshmallow import Schema, fields, validate, post_load
+# essential_features/models.py
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import relationship
+from ..core.database import Base
 
-class EssentialHook(db.Model):
+
+class EssentialHook(Base):
     __tablename__ = "essential_hooks"
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255), nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    score = Column(Integer, default=0)
+    platform = Column(String(50))
 
-    # For the Dashboard Metrics
-    score = db.Column(db.Integer, default=0)
-
-    platform = db.Column(db.String(50))  
+    # Relationships
+    comments = relationship("EssentialHookComment", back_populates="hook")
 
     def to_dict(self):
         return {
@@ -23,15 +24,18 @@ class EssentialHook(db.Model):
         }
 
 
-class EssentialPost(db.Model):
+class EssentialPost(Base):
     __tablename__ = "essential_posts"
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(400), nullable=False)
-    content = db.Column(db.Text, nullable=True)
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(400), nullable=False)
+    content = Column(Text, nullable=True)
+    like_count = Column(Integer, default=0)
+    share_count = Column(Integer, default=0)
 
-    like_count = db.Column(db.Integer, default=0)
-    share_count = db.Column(db.Integer, default=0)
+    # Relationships
+    likes = relationship("EssentialPostLike", back_populates="post")
+    saves = relationship("EssentialPostSave", back_populates="post")
 
     def to_dict(self):
         return {
@@ -43,208 +47,220 @@ class EssentialPost(db.Model):
         }
 
 
-class EssentialPostLike(db.Model):
+class EssentialPostLike(Base):
     __tablename__ = "essential_post_likes"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    post_id = Column(Integer, ForeignKey("essential_posts.id"))
 
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    post_id = db.Column(db.Integer, db.ForeignKey("essential_posts.id"))
-
-    user = db.relationship("User")
-    post = db.relationship("EssentialPost")
+    # Relationships
+    user = relationship("User")
+    post = relationship("EssentialPost", back_populates="likes")
 
     __table_args__ = (
-        db.UniqueConstraint("user_id", "post_id", name="unique_user_post_like"),
+        UniqueConstraint("user_id", "post_id", name="unique_user_post_like"),
     )
 
 
-class EssentialPostSave(db.Model):
+class EssentialPostSave(Base):
     __tablename__ = "essential_post_saves"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    post_id = Column(Integer, ForeignKey("essential_posts.id"))
 
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    post_id = db.Column(db.Integer, db.ForeignKey("essential_posts.id"))
-
-    user = db.relationship("User")
-    post = db.relationship("EssentialPost")
+    # Relationships
+    user = relationship("User")
+    post = relationship("EssentialPost", back_populates="saves")
 
     __table_args__ = (
-        db.UniqueConstraint("user_id", "post_id", name="unique_user_post_save"),
+        UniqueConstraint("user_id", "post_id", name="unique_user_post_save"),
     )
 
-    class EssentialHookCommentSchema(SQLAlchemySchema):
-        class Meta:
-            model = EssentialHookComment
-            load_instance = False
 
-        id = auto_field()
-        hook_id = auto_field()
-        user_id = auto_field()
-        comment_text = auto_field()
-
-class MetricsDataSchema(Schema):
-    """Schema for the metrics data object"""
-    totalGenerated = fields.Integer(
-        required=True,
-        validate=validate.Range(min=0),
-        description="Total number of generated hooks across all platforms"
-    )
-    totalSaved = fields.Integer(
-        required=True,
-        validate=validate.Range(min=0),
-        description="Total number of saved hooks across all platforms"
-    )
-    totalGeneratedScore = fields.Integer(
-        required=True,
-        validate=validate.Range(min=0),
-        description="Sum of all scores for generated hooks"
-    )
-    youtubeCount = fields.Integer(
-        required=True,
-        validate=validate.Range(min=0),
-        description="Number of generated YouTube hooks"
-    )
-    redditCount = fields.Integer(
-        required=True,
-        validate=validate.Range(min=0),
-        description="Number of generated Reddit hooks"
-    )
-    instagramCount = fields.Integer(
-        required=True,
-        validate=validate.Range(min=0),
-        description="Number of generated Instagram hooks"
-    )
+class EssentialHookComment(Base):
+    __tablename__ = "essential_hook_comments"
     
-    class Meta:
-        ordered = True
-
-
-class MetricsResponseSchema(Schema):
-    """Schema for successful metrics response"""
-    status = fields.String(
-        required=True,
-        validate=validate.OneOf(["success"]),
-        description="Response status"
-    )
-    data = fields.Nested(
-        MetricsDataSchema,
-        required=True,
-        description="Metrics data object"
-    )
+    id = Column(Integer, primary_key=True, index=True)
+    hook_id = Column(Integer, ForeignKey("essential_hooks.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    comment_text = Column(Text, nullable=False)
     
-    class Meta:
-        ordered = True
+    # Relationships
+    hook = relationship("EssentialHook", back_populates="comments")
+    user = relationship("User")
 
 
-class PlatformDataSchema(Schema):
-    """Schema for platform-specific metrics data"""
-    platform = fields.String(
-        required=True,
-        validate=validate.OneOf(["YouTube", "Reddit", "Instagram"]),
-        description="Platform name"
-    )
-    generated = fields.Integer(
-        required=True,
-        validate=validate.Range(min=0),
-        description="Number of generated hooks for this platform"
-    )
-    saved = fields.Integer(
-        required=True,
-        validate=validate.Range(min=0),
-        description="Number of saved hooks for this platform"
-    )
-    averageScore = fields.Float(
-        required=True,
-        validate=validate.Range(min=0),
-        description="Average score of generated hooks for this platform"
-    )
-    
-    class Meta:
-        ordered = True
+# essential_features/schemas.py
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, Dict, Any, Literal
+from enum import Enum
 
 
-class PlatformBreakdownSchema(Schema):
-    """Schema for platform breakdown response"""
-    status = fields.String(
-        required=True,
-        validate=validate.OneOf(["success"]),
-        description="Response status"
-    )
-    data = fields.Nested(
-        PlatformDataSchema,
-        required=True,
-        description="Platform-specific metrics"
-    )
-    
-    class Meta:
-        ordered = True
+class PlatformEnum(str, Enum):
+    """Enum for valid platforms"""
+    YOUTUBE = "YouTube"
+    REDDIT = "Reddit"
+    INSTAGRAM = "Instagram"
 
 
-class MetricsSummarySchema(Schema):
-    """Schema for simplified metrics summary"""
-    totalGenerated = fields.Integer(
-        required=True,
-        validate=validate.Range(min=0)
-    )
-    totalSaved = fields.Integer(
-        required=True,
-        validate=validate.Range(min=0)
-    )
-    totalScore = fields.Integer(
-        required=True,
-        validate=validate.Range(min=0)
-    )
-    
-    class Meta:
-        ordered = True
+# Request Schemas
+class EssentialHookCommentCreate(BaseModel):
+    """Schema for creating a hook comment"""
+    hook_id: int = Field(..., gt=0)
+    comment_text: str = Field(..., min_length=1, max_length=2000)
 
 
-class ErrorResponseSchema(Schema):
-    """Schema for error responses"""
-    status = fields.String(
-        required=True,
-        validate=validate.OneOf(["error"]),
-        description="Response status"
-    )
-    message = fields.String(
-        required=True,
-        description="Human-readable error message"
-    )
-    code = fields.String(
-        required=True,
-        description="Machine-readable error code"
-    )
-    details = fields.Dict(
-        required=False,
-        description="Additional error details (optional)"
-    )
-    
-    class Meta:
-        ordered = True
-
-
-class PlatformParamSchema(Schema):
+class PlatformParamSchema(BaseModel):
     """Schema for validating platform parameter"""
-    platform = fields.String(
-        required=True,
-        validate=validate.OneOf(
-            ["youtube", "reddit", "instagram", "YouTube", "Reddit", "Instagram"]
-        ),
-        description="Platform name (case-insensitive)"
-    )
+    platform: str = Field(..., description="Platform name (case-insensitive)")
     
-    @post_load
-    def capitalize_platform(self, data, **kwargs):
-        """Capitalize platform name after validation"""
-        data['platform'] = data['platform'].capitalize()
-        return data
+    @field_validator('platform')
+    @classmethod
+    def validate_and_capitalize_platform(cls, v: str) -> str:
+        """Validate and capitalize platform name"""
+        valid_platforms = ["youtube", "reddit", "instagram"]
+        if v.lower() not in valid_platforms:
+            raise ValueError(
+                f"Platform must be one of: {', '.join(valid_platforms)}"
+            )
+        return v.capitalize()
 
 
-# Schema instances for reuse
-metrics_response_schema = MetricsResponseSchema()
-platform_breakdown_schema = PlatformBreakdownSchema()
-metrics_summary_schema = MetricsSummarySchema()
-error_response_schema = ErrorResponseSchema()
-platform_param_schema = PlatformParamSchema()
+# Response Schemas
+class EssentialHookCommentSchema(BaseModel):
+    """Schema for Essential Hook Comment"""
+    id: int
+    hook_id: int
+    user_id: int
+    comment_text: str
+    
+    class Config:
+        from_attributes = True
+
+
+class EssentialHookSchema(BaseModel):
+    """Schema for Essential Hook"""
+    id: int
+    title: str
+    platform: Optional[str] = None
+    score: int
+    
+    class Config:
+        from_attributes = True
+
+
+class EssentialPostSchema(BaseModel):
+    """Schema for Essential Post"""
+    id: int
+    title: str
+    content: Optional[str] = None
+    like_count: int
+    share_count: int
+    
+    class Config:
+        from_attributes = True
+
+
+class MetricsDataSchema(BaseModel):
+    """Schema for the metrics data object"""
+    totalGenerated: int = Field(..., ge=0, description="Total number of generated hooks")
+    totalSaved: int = Field(..., ge=0, description="Total number of saved hooks")
+    totalGeneratedScore: int = Field(..., ge=0, description="Sum of all scores")
+    youtubeCount: int = Field(..., ge=0, description="Number of YouTube hooks")
+    redditCount: int = Field(..., ge=0, description="Number of Reddit hooks")
+    instagramCount: int = Field(..., ge=0, description="Number of Instagram hooks")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "totalGenerated": 150,
+                "totalSaved": 45,
+                "totalGeneratedScore": 7250,
+                "youtubeCount": 80,
+                "redditCount": 50,
+                "instagramCount": 20
+            }
+        }
+
+
+class MetricsResponseSchema(BaseModel):
+    """Schema for successful metrics response"""
+    status: Literal["success"] = "success"
+    data: MetricsDataSchema
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "status": "success",
+                "data": {
+                    "totalGenerated": 150,
+                    "totalSaved": 45,
+                    "totalGeneratedScore": 7250,
+                    "youtubeCount": 80,
+                    "redditCount": 50,
+                    "instagramCount": 20
+                }
+            }
+        }
+
+
+class PlatformDataSchema(BaseModel):
+    """Schema for platform-specific metrics data"""
+    platform: PlatformEnum
+    generated: int = Field(..., ge=0)
+    saved: int = Field(..., ge=0)
+    averageScore: float = Field(..., ge=0)
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "platform": "YouTube",
+                "generated": 80,
+                "saved": 25,
+                "averageScore": 90.5
+            }
+        }
+
+
+class PlatformBreakdownSchema(BaseModel):
+    """Schema for platform breakdown response"""
+    status: Literal["success"] = "success"
+    data: PlatformDataSchema
+
+
+class MetricsSummarySchema(BaseModel):
+    """Schema for simplified metrics summary"""
+    totalGenerated: int = Field(..., ge=0)
+    totalSaved: int = Field(..., ge=0)
+    totalScore: int = Field(..., ge=0)
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "totalGenerated": 150,
+                "totalSaved": 45,
+                "totalScore": 7250
+            }
+        }
+
+
+class ErrorResponseSchema(BaseModel):
+    """Schema for error responses"""
+    status: Literal["error"] = "error"
+    message: str
+    code: str
+    details: Optional[Dict[str, Any]] = None
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "status": "error",
+                "message": "Failed to retrieve dashboard metrics",
+                "code": "METRICS_FETCH_FAILED",
+                "details": {}
+            }
+        }
+
+

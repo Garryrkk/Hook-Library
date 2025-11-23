@@ -1,803 +1,443 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Menu, X, Youtube, Camera, Mail, Mic, Video, Pen, Copy, Heart, ExternalLink, ChevronDown, Sparkles, TrendingUp, Clock, Filter } from 'lucide-react';
+import { Camera, Mic, Mail, Pen, MessageCircle, Instagram, Video, User } from 'lucide-react';
+import Dashboard from './pages/Dashboard';
+import HookExplorer from './pages/hook_explorer';
+import ScraperConsole from './pages/scraper_console';
+import ProfilePage from './pages/profile';
+import AboutPage from './pages/AboutPage';
 
-// ============================================
-// NAVBAR COMPONENT
-// ============================================
-const Navbar = ({ currentPage, onNavigate }) => {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+const HookBankLanding = () => {
+  const [currentPage, setCurrentPage] = useState('landing');
+  const [floatingIcons, setFloatingIcons] = useState([]);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    fetch("http://localhost:8000/api/some-endpoint")  // your FastAPI endpoint
+    const icons = [
+      { Icon: Camera, color: '#ff00ff', id: 1 },
+      { Icon: Mic, color: '#00ffff', id: 2 },
+      { Icon: Mail, color: '#ff0080', id: 3 },
+      { Icon: Pen, color: '#ffff00', id: 4 },
+      { Icon: Instagram, color: '#ff00ff', id: 6 },
+      { Icon: Video, color: '#ff0080', id: 7 },
+      { Icon: Camera, color: '#00ffff', id: 8 },
+      { Icon: Mic, color: '#ffff00', id: 9 },
+      { Icon: Mail, color: '#00ff00', id: 10 },
+      { Icon: Pen, color: '#ff00ff', id: 11 },
+      { Icon: MessageCircle, color: '#ff0080', id: 12 },
+    ];
+
+    const positioned = icons.map((icon, idx) => ({
+      ...icon,
+      top: Math.random() * 80 + 10,
+      left: Math.random() * 90 + 5,
+      delay: idx * 0.5,
+      duration: 15 + Math.random() * 10,
+    }));
+
+    setFloatingIcons(positioned);
   }, []);
 
-  return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled ? 'bg-[#0a0a0f]/80 backdrop-blur-lg shadow-lg shadow-purple-500/10' : 'bg-transparent'
-    }`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => onNavigate('home')}>
-            <div className="hero-gradient-text text-2xl font-bold" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-              Hook Bank
-            </div>
-            <span className="text-xs text-gray-400 hidden sm:block">Viral Hook Library</span>
-          </div>
+  // Navigation handler
+  const navigateTo = (page) => {
+    setCurrentPage(page);
+  };
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center space-x-8">
-            <button 
-              onClick={() => onNavigate('home')}
-              className={`transition-colors ${currentPage === 'home' ? 'text-white font-semibold' : 'text-gray-300 hover:text-white'}`}
-            >
-              Home
-            </button>
-            <button 
-              onClick={() => onNavigate('dashboard')}
-              className={`transition-colors ${currentPage === 'dashboard' ? 'text-white font-semibold' : 'text-gray-300 hover:text-white'}`}
-            >
-              Dashboard
-            </button>
-            <button 
-              onClick={() => onNavigate('explorer')}
-              className={`transition-colors ${currentPage === 'explorer' ? 'text-white font-semibold' : 'text-gray-300 hover:text-white'}`}
-            >
-              Explorer
-            </button>
-            <button className="text-gray-300 hover:text-white transition-colors">About</button>
-          </div>
+  // Render different pages based on currentPage state
+  const renderPage = () => {
+    switch(currentPage) {
+      case 'scraper':
+        return <ScraperConsole />;
+      case 'dashboard':
+        return <Dashboard />;
+      case 'explorer':
+        return <HookExplorer />;
+      case 'profile':
+        return <ProfilePage />;
+      case 'about':
+        return <AboutPage />;
+      default:
+        return renderLandingPage();
+    }
+  };
 
-          {/* CTA Button */}
-          <div className="hidden md:flex items-center space-x-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => onNavigate('explorer')}
-              className="px-6 py-2 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold shadow-lg"
-              aria-label="Explore Hooks"
-            >
-              Explore Hooks
-            </motion.button>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden text-white"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="md:hidden bg-[#0a0a0f]/95 backdrop-blur-lg rounded-lg mt-2 p-4 space-y-3"
-          >
-            <button 
-              onClick={() => { onNavigate('home'); setMobileOpen(false); }}
-              className="block w-full text-left text-gray-300 hover:text-white py-2"
-            >
-              Home
-            </button>
-            <button 
-              onClick={() => { onNavigate('dashboard'); setMobileOpen(false); }}
-              className="block w-full text-left text-gray-300 hover:text-white py-2"
-            >
-              Dashboard
-            </button>
-            <button 
-              onClick={() => { onNavigate('explorer'); setMobileOpen(false); }}
-              className="block w-full text-left text-gray-300 hover:text-white py-2"
-            >
-              Explorer
-            </button>
-            <button className="block w-full text-left text-gray-300 hover:text-white py-2">About</button>
-            <button 
-              onClick={() => { onNavigate('explorer'); setMobileOpen(false); }}
-              className="w-full px-6 py-2 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold"
-            >
-              Explore Hooks
-            </button>
-          </motion.div>
-        )}
-      </div>
-    </nav>
-  );
-};
-
-// ============================================
-// HERO COMPONENT
-// ============================================
-const Hero = ({ onExplore }) => {
-  const icons = [
-    { Icon: Video, delay: 0, x: -100, y: -50 },
-    { Icon: Mic, delay: 0.2, x: 100, y: -30 },
-    { Icon: Camera, delay: 0.4, x: -80, y: 80 },
-    { Icon: Mail, delay: 0.6, x: 120, y: 70 },
-    { Icon: Pen, delay: 0.8, x: 0, y: -100 }
-  ];
-
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0f] via-[#1a0a2e] to-[#0a0a0f]" />
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(139, 92, 246, 0.15) 1px, transparent 0)',
-          backgroundSize: '40px 40px'
-        }} />
-      </div>
-
-      {/* Floating 3D Icons */}
-      {icons.map(({ Icon, delay, x, y }, i) => (
-        <motion.div
-          key={i}
-          className="absolute neon-glow"
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{
+  const renderLandingPage = () => (
+    <div style={{
+      position: 'relative',
+      minHeight: '100vh',
+      width: '100%',
+      overflow: 'hidden',
+      background: 'linear-gradient(135deg, #000000 0%, #1a0033 30%, #2d0066 60%, #4a0099 100%)',
+      fontFamily: "'Orbitron', 'Courier New', monospace"
+    }}>
+      {/* Floating Icons */}
+      {floatingIcons.map(({ Icon, color, id, top, left, delay, duration }) => (
+        <div
+          key={id}
+          style={{
+            position: 'absolute',
+            top: `${top}%`,
+            left: `${left}%`,
             opacity: 0.4,
-            scale: 1,
-            y: [0, -20, 0],
-            rotate: [0, 5, -5, 0]
+            animation: `float ${duration}s ease-in-out ${delay}s infinite`,
+            filter: `drop-shadow(0 0 15px ${color})`,
+            zIndex: 1
           }}
-          transition={{
-            opacity: { delay, duration: 0.5 },
-            scale: { delay, duration: 0.5 },
-            y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-            rotate: { duration: 6, repeat: Infinity, ease: "easeInOut" }
-          }}
-          style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)` }}
         >
-          <Icon size={48} className="text-purple-400" />
-        </motion.div>
+          <Icon size={50} color={color} strokeWidth={2} />
+        </div>
       ))}
 
-      {/* Hero Content */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="hero-gradient-text text-5xl sm:text-6xl lg:text-7xl font-bold mb-6"
-          style={{ fontFamily: 'Orbitron, sans-serif' }}
-        >
-          Hook Bank
-        </motion.h1>
-        
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-xl sm:text-2xl text-gray-300 mb-4"
-        >
-          Find hooks that go viral
-        </motion.p>
-        
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="text-base sm:text-lg text-gray-400 mb-8 max-w-2xl mx-auto"
-        >
-          Discover, analyze, and remix viral hooks from YouTube, Reddit, and Instagram. Auto-labeled, semantically searchable, ready to boost your content.
-        </motion.p>
-
-        {/* CTAs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold text-lg shadow-lg shadow-purple-500/50"
-            onClick={() => onExplore('dashboard')}
-          >
-            Explore Dashboard
-          </motion.button>
-          
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 border-2 border-purple-500 text-white rounded-lg font-semibold text-lg hover:bg-purple-500/10 transition-colors"
-            onClick={() => onExplore('dashboard')}
-          >
-            Scrape Now
-          </motion.button>
-        </motion.div>
-
-        {/* Microcopy */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="text-sm text-gray-500"
-        >
-          No login required • Free • 1000+ hooks
-        </motion.p>
-      </div>
-    </section>
-  );
-};
-
-// ============================================
-// STATS BAR COMPONENT
-// ============================================
-const StatsBar = () => {
-  const statCards = [
-    { icon: Sparkles, label: 'Hooks in DB', value: '1,247', color: 'from-pink-500 to-purple-500' },
-    { icon: TrendingUp, label: 'Platforms', value: '3', color: 'from-purple-500 to-blue-500' },
-    { icon: Clock, label: 'Last Updated', value: 'Just now', color: 'from-blue-500 to-pink-500' }
-  ];
-
-  return (
-    <section className="py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {statCards.map((stat, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-gradient-to-br from-[#1a0a2e]/50 to-[#0a0a0f]/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6 flex items-center space-x-4"
-            >
-              <div className={`p-3 bg-gradient-to-br ${stat.color} rounded-lg`}>
-                <stat.icon size={24} className="text-white" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{stat.value}</p>
-                <p className="text-sm text-gray-400">{stat.label}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// ============================================
-// PLATFORM CARD COMPONENT
-// ============================================
-const PlatformCard = ({ platform, icon: Icon, description, color, onScrape }) => {
-  const [loading, setLoading] = useState(false);
-
-  const handleScrape = async () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      onScrape();
-    }, 2000);
-  };
-
-  return (
-    <motion.div
-      whileHover={{ scale: 1.05, y: -5 }}
-      className="bg-gradient-to-br from-[#1a0a2e]/80 to-[#0a0a0f]/80 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6 relative overflow-hidden group cursor-pointer"
-    >
-      <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-10 transition-opacity`} />
-      
-      <div className="relative z-10">
-        <div className="mb-4">
-          <Icon size={48} className="text-purple-400 group-hover:text-pink-400 transition-colors" />
-        </div>
-        
-        <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-          {platform}
-        </h3>
-        
-        <p className="text-gray-400 text-sm mb-4">{description}</p>
-        
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="w-full px-4 py-2 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold text-sm disabled:opacity-50"
-          onClick={handleScrape}
-          disabled={loading}
-        >
-          {loading ? 'Scraping...' : 'Scrape Now'}
-        </motion.button>
-      </div>
-    </motion.div>
-  );
-};
-
-// ============================================
-// SEARCH BAR COMPONENT
-// ============================================
-const SearchBar = ({ onSearch }) => {
-  const [query, setQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-
-  const handleSubmit = () => {
-    onSearch(query);
-  };
-
-  return (
-    <section className="py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-4">
-          <div className="relative">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
-              placeholder='Search hooks — e.g., "How I made $10k"'
-              className="w-full px-6 py-4 pr-12 bg-[#1a0a2e]/50 border border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
-            />
-            <button
-              onClick={handleSubmit}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] rounded-lg"
-              aria-label="Search"
-            >
-              <Search size={20} className="text-white" />
-            </button>
-          </div>
-        </div>
-
+      {/* Navigation Bar */}
+      <nav style={{
+        position: 'relative',
+        zIndex: 10,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '30px 80px',
+        maxWidth: '1920px',
+        margin: '0 auto'
+      }}>
+        {/* Logo */}
         <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
+          onClick={() => navigateTo('landing')}
+          style={{
+            fontSize: '36px',
+            fontWeight: 900,
+            background: 'linear-gradient(90deg, #da408dff 0%, #ff00ff 50%, #8000ff 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            border: 'none',
+            cursor: 'pointer',
+            letterSpacing: '3px',
+            fontFamily: "'Orbitron', monospace",
+            padding: 0
+          }}
         >
-          <Filter size={16} />
-          <span className="text-sm">Filters</span>
-          <ChevronDown size={16} className={`transform transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          HOOK BANK
         </button>
 
-        {showFilters && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4"
-          >
-            <select className="px-4 py-2 bg-[#1a0a2e]/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500">
-              <option>All Platforms</option>
-              <option>YouTube</option>
-              <option>Reddit</option>
-              <option>Instagram</option>
-            </select>
-            
-            <select className="px-4 py-2 bg-[#1a0a2e]/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500">
-              <option>All Tones</option>
-              <option>Motivational</option>
-              <option>Shock</option>
-              <option>Educational</option>
-            </select>
-            
-            <select className="px-4 py-2 bg-[#1a0a2e]/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500">
-              <option>Sort: Newest</option>
-              <option>Most Popular</option>
-              <option>By Cluster</option>
-            </select>
-          </motion.div>
-        )}
-      </div>
-    </section>
-  );
-};
-
-// ============================================
-// HOOK CARD COMPONENT
-// ============================================
-const HookCard = ({ hook, onCopy, onFavorite, onOpen }) => {
-  const [copied, setCopied] = useState(false);
-  const [favorited, setFavorited] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(hook.text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    onCopy?.();
-  };
-
-  const handleFavorite = () => {
-    setFavorited(!favorited);
-    onFavorite?.();
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -5 }}
-      className="bg-gradient-to-br from-[#1a0a2e]/80 to-[#0a0a0f]/80 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6 cursor-pointer group"
-      onClick={() => onOpen?.(hook)}
-    >
-      <div className="flex items-start justify-between mb-4">
-        <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs font-semibold">
-          {hook.platform}
-        </span>
-        <div className="flex space-x-2">
+        {/* Navigation Links */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '50px'
+        }}>
           <button
-            onClick={(e) => { e.stopPropagation(); handleCopy(); }}
-            className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors"
-            aria-label="Copy hook"
+            onClick={() => navigateTo('scraper')}
+            style={{
+              fontSize: '18px',
+              color: '#bb86fc',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'color 0.3s',
+              letterSpacing: '1px',
+              fontFamily: "'Orbitron', monospace"
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#ff0080'}
+            onMouseLeave={(e) => e.target.style.color = '#bb86fc'}
           >
-            <Copy size={16} className={copied ? 'text-green-400' : 'text-gray-400'} />
+            Scraper-Console
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); handleFavorite(); }}
-            className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors"
-            aria-label="Favorite hook"
+            onClick={() => navigateTo('dashboard')}
+            style={{
+              fontSize: '18px',
+              color: '#bb86fc',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'color 0.3s',
+              letterSpacing: '1px',
+              fontFamily: "'Orbitron', monospace"
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#ff0080'}
+            onMouseLeave={(e) => e.target.style.color = '#bb86fc'}
           >
-            <Heart size={16} className={favorited ? 'text-pink-400 fill-pink-400' : 'text-gray-400 hover:text-pink-400'} />
+            Dashboard
+          </button>
+          <button
+            onClick={() => navigateTo('explorer')}
+            style={{
+              fontSize: '18px',
+              color: '#bb86fc',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'color 0.3s',
+              letterSpacing: '1px',
+              fontFamily: "'Orbitron', monospace"
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#ff0080'}
+            onMouseLeave={(e) => e.target.style.color = '#bb86fc'}
+          >
+            Hook-Explorer
+          </button>
+          <button
+            onClick={() => navigateTo('about')}
+            style={{
+              fontSize: '18px',
+              color: '#bb86fc',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'color 0.3s',
+              letterSpacing: '1px',
+              fontFamily: "'Orbitron', monospace"
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#ff0080'}
+            onMouseLeave={(e) => e.target.style.color = '#bb86fc'}
+          >
+            About
+          </button>
+          <button
+            onClick={() => navigateTo('profile')}
+            style={{
+              background: 'rgba(204, 0, 102, 0.2)',
+              border: '2px solid #cc0066',
+              borderRadius: '50%',
+              width: '45px',
+              height: '45px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              boxShadow: '0 0 15px rgba(204, 0, 102, 0.4)',
+              padding: 0
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 25px rgba(204, 0, 102, 0.8)';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 0 15px rgba(204, 0, 102, 0.4)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <User size={24} color="#ff00ff" />
           </button>
         </div>
-      </div>
+      </nav>
 
-      <p className="text-white text-lg mb-4 line-clamp-3 group-hover:text-pink-300 transition-colors">
-        "{hook.text}"
-      </p>
+      {/* Hero Section */}
+      <div style={{
+        position: 'relative',
+        zIndex: 10,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '100px 80px',
+        maxWidth: '1920px',
+        margin: '0 auto',
+        minHeight: 'calc(100vh - 300px)'
+      }}>
+        {/* Left Column - Content */}
+        <div style={{
+          width: '45%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '40px'
+        }}>
+          <h1 style={{
+            fontSize: '72px',
+            fontWeight: 900,
+            lineHeight: '1.2',
+            background: 'linear-gradient(90deg, #ff0080 0%, #ff00ff 30%, #8000ff 60%, #ff0080 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            margin: 0,
+            letterSpacing: '2px'
+          }}>
+            Generate Viral Hooks with AI Power
+          </h1>
+          
+          <p style={{
+            fontSize: '28px',
+            color: '#bb86fc',
+            margin: 0,
+            letterSpacing: '1px'
+          }}>
+            Never Run Out of Content Ideas Again
+          </p>
 
-      <div className="flex flex-wrap gap-2 mb-3">
-        <span className="px-2 py-1 bg-pink-500/10 text-pink-300 rounded text-xs">{hook.tone}</span>
-        <span className="px-2 py-1 bg-blue-500/10 text-blue-300 rounded text-xs">{hook.niche}</span>
-      </div>
-
-      {hook.source && (
-        <a
-          href={hook.source}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="text-purple-400 text-sm flex items-center space-x-1 hover:text-pink-400 transition-colors"
-        >
-          <span>View source</span>
-          <ExternalLink size={12} />
-        </a>
-      )}
-    </motion.div>
-  );
-};
-
-// ============================================
-// FOOTER COMPONENT
-// ============================================
-const Footer = () => {
-  return (
-    <footer className="border-t border-pink-500/30 bg-[#0a0a0f] py-12 px-4 shadow-[0_-10px_50px_rgba(255,75,139,0.1)]">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          <div>
-            <div className="hero-gradient-text text-2xl font-bold mb-2" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-              Hook Bank
-            </div>
-            <p className="text-gray-400 text-sm">Viral Hook Library</p>
-          </div>
-
-          <div>
-            <h4 className="text-white font-semibold mb-3">Links</h4>
-            <div className="space-y-2">
-              <button className="block text-gray-400 hover:text-white text-sm transition-colors">Dashboard</button>
-              <button className="block text-gray-400 hover:text-white text-sm transition-colors">Explore</button>
-              <button className="block text-gray-400 hover:text-white text-sm transition-colors">Scraper</button>
-              <button className="block text-gray-400 hover:text-white text-sm transition-colors">About</button>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-white font-semibold mb-3">Legal</h4>
-            <div className="space-y-2">
-              <button className="block text-gray-400 hover:text-white text-sm transition-colors">Privacy Policy</button>
-              <button className="block text-gray-400 hover:text-white text-sm transition-colors">Terms of Service</button>
-            </div>
-          </div>
+          <button
+            onClick={() => navigateTo('scraper')}
+            style={{
+              padding: '20px 50px',
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#000',
+              background: '#cc0066',
+              border: 'none',
+              borderRadius: '50px',
+              cursor: 'pointer',
+              boxShadow: '0 0 20px rgba(204, 0, 102, 0.6)',
+              animation: 'pulseGlow 2s ease-in-out infinite',
+              letterSpacing: '2px',
+              fontFamily: "'Orbitron', monospace"
+            }}
+          >
+            Start Creating →
+          </button>
         </div>
 
-        <div className="border-t border-purple-500/20 pt-6 text-center">
-          <p className="text-gray-500 text-sm">Built with 💜 by Hook Bank Team</p>
+        {/* Right Column - Visual Element */}
+        <div style={{
+          width: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          height: '600px'
+        }}>
+          {/* Central Circle */}
+          <div style={{
+            position: 'absolute',
+            width: '450px',
+            height: '450px',
+            borderRadius: '50%',
+            border: '5px solid #cc0066',
+            boxShadow: '0 0 40px rgba(204, 0, 102, 0.5), inset 0 0 40px rgba(204, 0, 102, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0, 0, 0, 0.4)'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                fontSize: '96px',
+                fontWeight: 900,
+                background: 'linear-gradient(90deg, #ff0080 0%, #ff00ff 50%, #8000ff 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                letterSpacing: '3px'
+              }}>
+                100K+
+              </div>
+              <div style={{
+                fontSize: '28px',
+                color: '#bb86fc',
+                marginTop: '10px',
+                letterSpacing: '2px'
+              }}>
+                Hooks Generated
+              </div>
+            </div>
+          </div>
+
+          {/* Orbiting Icons */}
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, idx) => {
+            const radius = 280;
+            const x = Math.cos((angle * Math.PI) / 180) * radius;
+            const y = Math.sin((angle * Math.PI) / 180) * radius;
+            const IconComponent = [Mic, Mail, Pen, MessageCircle, Instagram, Video, Mic, Mail][idx];
+            const colors = ['#ff0080', '#00ffff', '#ff00ff', '#ffff00', '#00ff00', '#ff0080', '#00ffff', '#ff00ff'];
+
+            return (
+              <div
+                key={idx}
+                style={{
+                  position: 'absolute',
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  border: `3px solid ${colors[idx]}`,
+                  left: '50%',
+                  top: '50%',
+                  transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                  boxShadow: `0 0 30px ${colors[idx]}`,
+                  animation: `orbit 25s linear ${idx * 0.5}s infinite`
+                }}
+              >
+                <IconComponent size={36} color={colors[idx]} strokeWidth={2.5} />
+              </div>
+            );
+          })}
         </div>
       </div>
-    </footer>
-  );
-};
 
-// ============================================
-// MAIN APP COMPONENT
-// ============================================
-export default function App() {
-  const [currentPage, setCurrentPage] = useState('home');
-  const [sampleHooks] = useState([
-    {
-      id: 1,
-      text: "How I made $10k in 30 days with this simple trick nobody talks about",
-      platform: "YouTube",
-      tone: "motivational",
-      niche: "business",
-      source: "https://youtube.com"
-    },
-    {
-      id: 2,
-      text: "This Reddit comment changed my entire perspective on productivity",
-      platform: "Reddit",
-      tone: "educational",
-      niche: "productivity",
-      source: "https://reddit.com"
-    },
-    {
-      id: 3,
-      text: "The brutal truth about fitness that trainers won't tell you",
-      platform: "Instagram",
-      tone: "shock",
-      niche: "fitness",
-      source: "https://instagram.com"
-    },
-    {
-      id: 4,
-      text: "I analyzed 1000 viral videos and found these 3 patterns",
-      platform: "YouTube",
-      tone: "educational",
-      niche: "content",
-      source: "https://youtube.com"
-    },
-    {
-      id: 5,
-      text: "Why everyone is quitting their 9-5 for this side hustle",
-      platform: "Reddit",
-      tone: "curiosity",
-      niche: "business",
-      source: "https://reddit.com"
-    },
-    {
-      id: 6,
-      text: "The one mindset shift that millionaires use daily",
-      platform: "Instagram",
-      tone: "motivational",
-      niche: "mindset",
-      source: "https://instagram.com"
-    }
-  ]);
+      {/* Footer */}
+      <div style={{
+        position: 'absolute',
+        bottom: '10px',
+        left: 0,
+        right: 0,
+        textAlign: 'center',
+        zIndex: 10
+      }}>
+        <p style={{
+          fontSize: '20px',
+          color: '#bb86fc',
+          margin: '0 0 10px 0',
+          letterSpacing: '1px'
+        }}>
+          Built with 💜 by Hook Bank Team
+        </p>
+        <p style={{
+          fontSize: '18px',
+          color: '#ff0080',
+          margin: 0,
+          letterSpacing: '1px'
+        }}>
+          Two sisters Garima and Aurin
+        </p>
+      </div>
 
-  const platforms = [
-    {
-      platform: "YouTube",
-      icon: Youtube,
-      description: "Scrape viral video hooks from the world's largest video platform",
-      color: "from-red-500 to-red-700"
-    },
-    {
-      platform: "Reddit",
-      icon: Camera,
-      description: "Extract engaging post titles and comments from trending subreddits",
-      color: "from-orange-500 to-red-500"
-    },
-    {
-      platform: "Instagram",
-      icon: Camera,
-      description: "Capture attention-grabbing captions from top performing reels",
-      color: "from-purple-500 to-pink-500"
-    }
-  ];
-
-  const handleNavigate = (page) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
         
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+          }
+          25% {
+            transform: translateY(-40px) rotate(5deg);
+          }
+          50% {
+            transform: translateY(-80px) rotate(-5deg);
+          }
+          75% {
+            transform: translateY(-40px) rotate(3deg);
+          }
         }
-        
-        body {
-          font-family: 'Inter', sans-serif;
-          background: #0a0a0f;
+
+        @keyframes pulseGlow {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(204, 0, 102, 0.6);
+            transform: scale(1);
+          }
+          50% {
+            box-shadow: 0 0 30px rgba(204, 0, 102, 0.8);
+            transform: scale(1.05);
+          }
         }
-        
-        .hero-gradient-text {
-          background: linear-gradient(90deg, #ff4b8b, #8b5cf6);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+
+        @keyframes orbit {
+          0% {
+            transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(0deg);
+          }
+          100% {
+            transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(360deg);
+          }
         }
-        
-        .neon-glow {
-          filter: drop-shadow(0 0 8px #ff4b8b) drop-shadow(0 0 16px #8b5cf6);
+
+        button:hover {
+          transform: scale(1.05);
         }
       `}</style>
-
-      <Navbar currentPage={currentPage} onNavigate={handleNavigate} />
-      
-      <AnimatePresence mode="wait">
-        {currentPage === 'home' && (
-          <motion.div
-            key="home"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <Hero onExplore={handleNavigate} />
-            <StatsBar />
-            
-            {/* Platform Section */}
-            <section className="py-16 px-4">
-              <div className="max-w-6xl mx-auto">
-                <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="text-3xl sm:text-4xl font-bold text-center mb-4"
-                  style={{ fontFamily: 'Orbitron, sans-serif' }}
-                >
-                  <span className="hero-gradient-text">Supported Platforms</span>
-                </motion.h2>
-                <p className="text-gray-400 text-center mb-12">Scrape viral hooks from multiple platforms</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {platforms.map((platform, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: i * 0.1 }}
-                    >
-                      <PlatformCard {...platform} onScrape={() => handleNavigate('dashboard')} />
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <SearchBar onSearch={(q) => console.log('Search:', q)} />
-
-            {/* Hook Samples Grid */}
-            <section className="py-16 px-4">
-              <div className="max-w-6xl mx-auto">
-                <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="text-3xl sm:text-4xl font-bold text-center mb-4"
-                  style={{ fontFamily: 'Orbitron, sans-serif' }}
-                >
-                  <span className="hero-gradient-text">Trending Hooks</span>
-                </motion.h2>
-                <p className="text-gray-400 text-center mb-12">Discover what's working right now</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {sampleHooks.map((hook) => (
-                    <HookCard
-                      key={hook.id}
-                      hook={hook}
-                      onCopy={() => console.log('Copied:', hook.id)}
-                      onFavorite={() => console.log('Favorited:', hook.id)}
-                      onOpen={(h) => console.log('Opened:', h)}
-                    />
-                  ))}
-                </div>
-
-                <div className="text-center mt-12">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleNavigate('explorer')}
-                    className="px-8 py-3 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold"
-                  >
-                    View All Hooks
-                  </motion.button>
-                </div>
-              </div>
-            </section>
-
-            <Footer />
-          </motion.div>
-        )}
-
-        {currentPage === 'dashboard' && (
-          <motion.div
-            key="dashboard"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="pt-24 px-4 min-h-screen"
-          >
-            <div className="max-w-6xl mx-auto">
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-4xl sm:text-5xl font-bold text-center mb-4"
-                style={{ fontFamily: 'Orbitron, sans-serif' }}
-              >
-                <span className="hero-gradient-text">Dashboard</span>
-              </motion.h1>
-              <p className="text-gray-400 text-center mb-12 text-lg">
-                Manage, analyze, and generate high-performing hooks from every platform
-              </p>
-
-              <div className="bg-gradient-to-br from-[#1a0a2e]/50 to-[#0a0a0f]/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-8 text-center">
-                <Sparkles size={64} className="text-purple-400 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-white mb-4">Dashboard Coming Soon</h2>
-                <p className="text-gray-400 mb-6">
-                  We're building an amazing dashboard experience with analytics, scraping tools, and more!
-                </p>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleNavigate('explorer')}
-                  className="px-6 py-3 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold"
-                >
-                  Explore Hooks Instead
-                </motion.button>
-              </div>
-            </div>
-            <div className="mt-16">
-              <Footer />
-            </div>
-          </motion.div>
-        )}
-
-        {currentPage === 'explorer' && (
-          <motion.div
-            key="explorer"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="pt-24 px-4 min-h-screen"
-          >
-            <div className="max-w-6xl mx-auto">
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-4xl sm:text-5xl font-bold text-center mb-4"
-                style={{ fontFamily: 'Orbitron, sans-serif' }}
-              >
-                <span className="hero-gradient-text">Hook Explorer</span>
-              </motion.h1>
-              <p className="text-gray-400 text-center mb-12 text-lg">
-                Your AI library for viral hooks. Search, filter, and discover high-performing content.
-              </p>
-
-              <SearchBar onSearch={(q) => console.log('Search:', q)} />
-
-              {/* Hooks Grid */}
-              <section className="py-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {sampleHooks.map((hook) => (
-                    <HookCard
-                      key={hook.id}
-                      hook={hook}
-                      onCopy={() => console.log('Copied:', hook.id)}
-                      onFavorite={() => console.log('Favorited:', hook.id)}
-                      onOpen={(h) => console.log('Opened:', h)}
-                    />
-                  ))}
-                </div>
-
-                <div className="text-center mt-12">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-8 py-3 bg-gradient-to-r from-[#ff4b8b] to-[#8b5cf6] text-white rounded-lg font-semibold"
-                  >
-                    Load More Hooks
-                  </motion.button>
-                </div>
-              </section>
-            </div>
-            <Footer />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
-}
+
+  return renderPage();
+};
+
+export default HookBankLanding;

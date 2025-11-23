@@ -1,14 +1,15 @@
 # essential_features/EssentialFeaturesRoutes.py
 
-from flask import Blueprint, jsonify, request, Blueprint, g
-from flask_jwt_extended import current_user, jwt_required
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body
+from fastapi.responses import JSONResponse
 from http import HTTPStatus
-from EssentialFeatures.EssentialFeaturesService import MetricsService
-from EssentialFeatures.EssentialFeaturesSchemas import MetricsResponseSchema, ErrorResponseSchema, PlatformBreakdownSchema
-from core.database import db
+from .EssentialFeaturesService import MetricsService
+from .EssentialFeaturesSchemas import MetricsResponseSchema, ErrorResponseSchema, PlatformBreakdownSchema
+from ..core.database import get_db
 from functools import wraps
+from typing import Optional, Dict, Any
 
-from EssentialFeatures.EssentialFeaturesService import (
+from .EssentialFeaturesService import (
     toggle_like_service,
     toggle_save_service,
     record_share_service,
@@ -21,30 +22,64 @@ from EssentialFeatures.EssentialFeaturesService import (
     like_hook_service,
     fetch_filtered_hooks_service
 )
-metrics_bp = Blueprint('metrics', __name__, url_prefix='/api/v1')
+
+metrics_bp = APIRouter(prefix='/api/v1', tags=['metrics'])
 
 # Initialize service
-metrics_service = MetricsService(db)
+metrics_service = MetricsService(get_db)
 
-from EssentialFeaturesSchemas import EssentialHook, EssentialPost, EssentialHookComment
-essential_features_bp = Blueprint("essential_features", __name__)
+from .EssentialFeaturesSchemas import EssentialHook, EssentialPost, EssentialHookComment
+essential_features_bp = APIRouter(tags=['essential_features'])
 hook_schema = EssentialHook
 hooks_schema = EssentialHook(many=True)
 post_schema = EssentialPost
 comment_schema = EssentialHookComment
 
-@essential_features_bp.route("/api/hooks", methods=["GET"])
-def get_filtered_hooks():
+
+# Dependency for JWT authentication (you'll need to implement this based on your auth setup)
+async def get_current_user(request: Request):
+    """
+    Dependency to get current authenticated user.
+    Replace with your actual JWT authentication logic.
+    """
+    # Placeholder - implement your JWT verification here
+    # Example: verify token from Authorization header
+    # token = request.headers.get("Authorization")
+    # user = verify_jwt_token(token)
+    # return user
+    return request.state.user if hasattr(request.state, 'user') else None
+
+
+async def jwt_required_dependency():
+    """Dependency that requires authentication"""
+    async def dependency(user=Depends(get_current_user)):
+        if not user:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        return user
+    return dependency
+
+
+async def jwt_required_optional_dependency():
+    """Dependency for optional authentication"""
+    async def dependency(user=Depends(get_current_user)):
+        return user
+    return dependency
+
+
+@essential_features_bp.get("/api/hooks")
+async def get_filtered_hooks(
+    q: Optional[str] = Query(None),
+    platform: str = Query("All Platforms"),
+    niche: str = Query("All Niches"),
+    tone: str = Query("All Tones"),
+    sort_by: str = Query("Newest First")
+):
     """
     Frontend calls:
     /api/hooks?q=fitness&platform=YouTube&tone=Emotional&sort_by=Most+Popular
     """
 
-    search_query = request.args.get("q", default=None)
-    platform = request.args.get("platform", default="All Platforms")
-    niche = request.args.get("niche", default="All Niches")
-    tone = request.args.get("tone", default="All Tones")
-    sort_by = request.args.get("sort_by", default="Newest First")
+    search_query = q
 
     hooks = fetch_filtered_hooks_service(
         search_query=search_query,
@@ -54,78 +89,86 @@ def get_filtered_hooks():
         sort_by=sort_by
     )
 
-    return jsonify(hooks), 200
+    return JSONResponse(content=hooks, status_code=200)
 
-@essential_features_bp.route("/api/posts/<int:post_id>/like", methods=["POST"])
-@jwt_required()
-def toggle_like(post_id):
+
+@essential_features_bp.post("/api/posts/{post_id}/like")
+async def toggle_like(post_id: int, current_user=Depends(get_current_user)):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
     result = toggle_like_service(post_id, current_user)
-    return jsonify(result), 200
+    return JSONResponse(content=result, status_code=200)
 
-@essential_features_bp.route("/api/hooksrefresh", methods=["POST"])
-def refresh_hooks():
+
+@essential_features_bp.post("/api/hooksrefresh")
+async def refresh_hooks():
     hooks = refresh_hooks_service()
-    return jsonify(hooks), 200
+    return JSONResponse(content=hooks, status_code=200)
 
-@essential_features_bp.route("/api/hooks/reset-filters", methods=["POST"])
-def reset_filters():
+
+@essential_features_bp.post("/api/hooks/reset-filters")
+async def reset_filters():
     hooks = reset_filters_service()
-    return jsonify(hooks), 200
+    return JSONResponse(content=hooks, status_code=200)
 
 
-@essential_features_bp.route("/api/hooks/<int:hook_id>/view", methods=["POST"])
-def record_hook_view(hook_id):
+@essential_features_bp.post("/api/hooks/{hook_id}/view")
+async def record_hook_view(hook_id: int):
     res = record_hook_view_service(hook_id)
-    return jsonify(res), 200
+    return JSONResponse(content=res, status_code=200)
 
 
-@essential_features_bp.route("/api/hooks/<int:hook_id>/like", methods=["POST"])
-@jwt_required(optional=True)
-def like_hook(hook_id):
+@essential_features_bp.post("/api/hooks/{hook_id}/like")
+async def like_hook(hook_id: int, current_user=Depends(get_current_user)):
     res = like_hook_service(hook_id)
-    return jsonify(res), 200
+    return JSONResponse(content=res, status_code=200)
 
 
-@essential_features_bp.route("/api/hooks/<int:hook_id>/copy", methods=["POST"])
-def record_hook_copy(hook_id):
+@essential_features_bp.post("/api/hooks/{hook_id}/copy")
+async def record_hook_copy(hook_id: int):
     res = record_hook_copy_service(hook_id)
-    return jsonify(res), 200
+    return JSONResponse(content=res, status_code=200)
 
 
-@essential_features_bp.route("/api/hooks/<int:hook_id>/comment", methods=["POST"])
-@jwt_required()
-def add_comment(hook_id):
-    payload = request.get_json() or {}
+@essential_features_bp.post("/api/hooks/{hook_id}/comment")
+async def add_comment(
+    hook_id: int,
+    payload: Dict[str, Any] = Body(...),
+    current_user=Depends(get_current_user)
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
     text = payload.get("text", "").strip()
     if not text:
-        return jsonify({"message": "Comment text required."}), 400
+        return JSONResponse(content={"message": "Comment text required."}, status_code=400)
 
     res = add_hook_comment_service(hook_id, current_user.id, text)
-    return jsonify(res), 201
+    return JSONResponse(content=res, status_code=201)
 
 
-
-@essential_features_bp.route("/api/posts/<int:post_id>/save", methods=["POST"])
-@jwt_required()
-def toggle_save(post_id):
+@essential_features_bp.post("/api/posts/{post_id}/save")
+async def toggle_save(post_id: int, current_user=Depends(get_current_user)):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
     result = toggle_save_service(post_id, current_user)
-    return jsonify(result), 200
+    return JSONResponse(content=result, status_code=200)
 
 
-@essential_features_bp.route("/api/posts/<int:post_id>/share", methods=["POST"])
-@jwt_required(optional=True)
-def record_share(post_id):
+@essential_features_bp.post("/api/posts/{post_id}/share")
+async def record_share(post_id: int, current_user=Depends(get_current_user)):
     result = record_share_service(post_id)
-    return jsonify(result), 202
+    return JSONResponse(content=result, status_code=202)
 
 
 # -------------------------------------------
 #   DASHBOARD METRICS API
 # -------------------------------------------
-@essential_features_bp.route("/api/dashboard/metrics", methods=["GET"])
-def dashboard_metrics():
+@essential_features_bp.get("/api/dashboard/metrics")
+async def dashboard_metrics():
     data = get_dashboard_metrics_service()
-    return jsonify(data), 200
+    return JSONResponse(content=data, status_code=200)
+
 
 def login_required(f):
     """
@@ -133,20 +176,23 @@ def login_required(f):
     Assumes authentication middleware sets g.user
     """
     @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not hasattr(g, 'user') or not g.user:
-            return jsonify({
-                "status": "error",
-                "message": "Authentication required",
-                "code": "UNAUTHORIZED"
-            }), HTTPStatus.UNAUTHORIZED
-        return f(*args, **kwargs)
+    async def decorated_function(*args, **kwargs):
+        request = kwargs.get('request')
+        if not hasattr(request.state, 'user') or not request.state.user:
+            return JSONResponse(
+                content={
+                    "status": "error",
+                    "message": "Authentication required",
+                    "code": "UNAUTHORIZED"
+                },
+                status_code=HTTPStatus.UNAUTHORIZED
+            )
+        return await f(*args, **kwargs)
     return decorated_function
 
 
-@metrics_bp.route("/user/metrics", methods=["GET"])
-@login_required
-def get_dashboard_metrics():
+@metrics_bp.get("/user/metrics")
+async def get_dashboard_metrics(request: Request):
     """
     GET /api/v1/user/metrics
     
@@ -172,7 +218,17 @@ def get_dashboard_metrics():
     """
     try:
         # Get user ID from authentication context
-        user_id = g.user.id
+        if not hasattr(request.state, 'user') or not request.state.user:
+            return JSONResponse(
+                content={
+                    "status": "error",
+                    "message": "Authentication required",
+                    "code": "UNAUTHORIZED"
+                },
+                status_code=HTTPStatus.UNAUTHORIZED
+            )
+        
+        user_id = request.state.user.id
         
         # Fetch metrics from service
         metrics_data = metrics_service.get_dashboard_metrics(user_id)
@@ -184,7 +240,7 @@ def get_dashboard_metrics():
             "data": metrics_data
         })
         
-        return jsonify(response), HTTPStatus.OK
+        return JSONResponse(content=response, status_code=HTTPStatus.OK)
         
     except Exception as e:
         # Log error (use your logging system)
@@ -197,12 +253,11 @@ def get_dashboard_metrics():
             "code": "METRICS_FETCH_FAILED"
         })
         
-        return jsonify(error_response), HTTPStatus.INTERNAL_SERVER_ERROR
+        return JSONResponse(content=error_response, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
-@metrics_bp.route("/user/metrics/platform/<platform>", methods=["GET"])
-@login_required
-def get_platform_metrics(platform: str):
+@metrics_bp.get("/user/metrics/platform/{platform}")
+async def get_platform_metrics(platform: str, request: Request):
     """
     GET /api/v1/user/metrics/platform/<platform>
     
@@ -223,24 +278,40 @@ def get_platform_metrics(platform: str):
     platform_capitalized = platform.capitalize()
     
     if platform_capitalized not in valid_platforms:
-        return jsonify({
-            "status": "error",
-            "message": f"Invalid platform. Must be one of: {', '.join(valid_platforms)}",
-            "code": "INVALID_PLATFORM"
-        }), HTTPStatus.BAD_REQUEST
+        return JSONResponse(
+            content={
+                "status": "error",
+                "message": f"Invalid platform. Must be one of: {', '.join(valid_platforms)}",
+                "code": "INVALID_PLATFORM"
+            },
+            status_code=HTTPStatus.BAD_REQUEST
+        )
     
     try:
-        user_id = g.user.id
+        if not hasattr(request.state, 'user') or not request.state.user:
+            return JSONResponse(
+                content={
+                    "status": "error",
+                    "message": "Authentication required",
+                    "code": "UNAUTHORIZED"
+                },
+                status_code=HTTPStatus.UNAUTHORIZED
+            )
+        
+        user_id = request.state.user.id
         
         # Fetch platform-specific breakdown
         platform_data = metrics_service.get_platform_breakdown(user_id, platform_capitalized)
         
         if not platform_data:
-            return jsonify({
-                "status": "error",
-                "message": f"No data found for platform: {platform_capitalized}",
-                "code": "PLATFORM_DATA_NOT_FOUND"
-            }), HTTPStatus.NOT_FOUND
+            return JSONResponse(
+                content={
+                    "status": "error",
+                    "message": f"No data found for platform: {platform_capitalized}",
+                    "code": "PLATFORM_DATA_NOT_FOUND"
+                },
+                status_code=HTTPStatus.NOT_FOUND
+            )
         
         schema = PlatformBreakdownSchema()
         response = schema.dump({
@@ -248,7 +319,7 @@ def get_platform_metrics(platform: str):
             "data": platform_data
         })
         
-        return jsonify(response), HTTPStatus.OK
+        return JSONResponse(content=response, status_code=HTTPStatus.OK)
         
     except Exception as e:
         error_schema = ErrorResponseSchema()
@@ -258,12 +329,11 @@ def get_platform_metrics(platform: str):
             "code": "PLATFORM_METRICS_FETCH_FAILED"
         })
         
-        return jsonify(error_response), HTTPStatus.INTERNAL_SERVER_ERROR
+        return JSONResponse(content=error_response, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
-@metrics_bp.route("/user/metrics/summary", methods=["GET"])
-@login_required
-def get_metrics_summary():
+@metrics_bp.get("/user/metrics/summary")
+async def get_metrics_summary(request: Request):
     """
     GET /api/v1/user/metrics/summary
     
@@ -276,7 +346,17 @@ def get_metrics_summary():
         500: Internal server error
     """
     try:
-        user_id = g.user.id
+        if not hasattr(request.state, 'user') or not request.state.user:
+            return JSONResponse(
+                content={
+                    "status": "error",
+                    "message": "Authentication required",
+                    "code": "UNAUTHORIZED"
+                },
+                status_code=HTTPStatus.UNAUTHORIZED
+            )
+        
+        user_id = request.state.user.id
         metrics_data = metrics_service.get_dashboard_metrics(user_id)
         
         # Return only summary fields
@@ -286,10 +366,13 @@ def get_metrics_summary():
             "totalScore": metrics_data["totalGeneratedScore"]
         }
         
-        return jsonify({
-            "status": "success",
-            "data": summary
-        }), HTTPStatus.OK
+        return JSONResponse(
+            content={
+                "status": "success",
+                "data": summary
+            },
+            status_code=HTTPStatus.OK
+        )
         
     except Exception as e:
         error_schema = ErrorResponseSchema()
@@ -299,25 +382,31 @@ def get_metrics_summary():
             "code": "SUMMARY_FETCH_FAILED"
         })
         
-        return jsonify(error_response), HTTPStatus.INTERNAL_SERVER_ERROR
+        return JSONResponse(content=error_response, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
 # Error handlers for the blueprint
-@metrics_bp.errorhandler(404)
-def not_found(error):
+@metrics_bp.exception_handler(404)
+async def not_found(request: Request, exc: HTTPException):
     """Handle 404 errors within this blueprint"""
-    return jsonify({
-        "status": "error",
-        "message": "Resource not found",
-        "code": "NOT_FOUND"
-    }), HTTPStatus.NOT_FOUND
+    return JSONResponse(
+        content={
+            "status": "error",
+            "message": "Resource not found",
+            "code": "NOT_FOUND"
+        },
+        status_code=HTTPStatus.NOT_FOUND
+    )
 
 
-@metrics_bp.errorhandler(500)
-def internal_error(error):
+@metrics_bp.exception_handler(500)
+async def internal_error(request: Request, exc: HTTPException):
     """Handle 500 errors within this blueprint"""
-    return jsonify({
-        "status": "error",
-        "message": "Internal server error",
-        "code": "INTERNAL_ERROR"
-    }), HTTPStatus.INTERNAL_SERVER_ERROR
+    return JSONResponse(
+        content={
+            "status": "error",
+            "message": "Internal server error",
+            "code": "INTERNAL_ERROR"
+        },
+        status_code=HTTPStatus.INTERNAL_SERVER_ERROR
+    )
