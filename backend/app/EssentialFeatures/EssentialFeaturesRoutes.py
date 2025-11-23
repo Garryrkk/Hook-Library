@@ -1,14 +1,28 @@
-# essential_features/EssentialFeaturesRoutes.py
+# essential_features/routes.py
+"""
+FastAPI routes for Essential Features module.
+Defines API endpoints for hooks, posts, comments, likes, and metrics.
+"""
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body, status
 from fastapi.responses import JSONResponse
-from http import HTTPStatus
-from .EssentialFeaturesService import MetricsService
-from .EssentialFeaturesSchemas import MetricsResponseSchema, ErrorResponseSchema, PlatformBreakdownSchema
-from ..core.database import get_db
-from functools import wraps
+from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 
+from ..core.database import get_db
+from .models import User
+from .EssentialFeaturesSchemas import (
+    MetricsResponseSchema,
+    ErrorResponseSchema,
+    PlatformBreakdownSchema,
+    CommentCreateRequest,
+    LikeToggleResponse,
+    SaveToggleResponse,
+    ShareRecordResponse,
+    ViewRecordResponse,
+    CommentAddResponse,
+    CopyRecordResponse
+)
 from .EssentialFeaturesService import (
     toggle_like_service,
     toggle_save_service,
@@ -20,260 +34,326 @@ from .EssentialFeaturesService import (
     reset_filters_service,
     add_hook_comment_service,
     like_hook_service,
-    fetch_filtered_hooks_service
+    fetch_filtered_hooks_service,
+    MetricsService
 )
 
-metrics_bp = APIRouter(prefix='/api/v1', tags=['metrics'])
 
-# Initialize service
-metrics_service = MetricsService(get_db)
+# ========================
+# Router Initialization
+# ========================
 
-from .EssentialFeaturesSchemas import EssentialHook, EssentialPost, EssentialHookComment
-essential_features_bp = APIRouter(tags=['essential_features'])
-hook_schema = EssentialHook
-hooks_schema = EssentialHook(many=True)
-post_schema = EssentialPost
-comment_schema = EssentialHookComment
+# Main features router
+essential_features_bp = APIRouter(prefix="/api", tags=["Essential Features"])
+
+# Metrics router
+metrics_bp = APIRouter(prefix="/api/v1", tags=["Metrics"])
 
 
-# Dependency for JWT authentication (you'll need to implement this based on your auth setup)
-async def get_current_user(request: Request):
+# ========================
+# Authentication Dependencies
+# ========================
+
+async def get_current_user(request: Request) -> Optional[User]:
     """
     Dependency to get current authenticated user.
-    Replace with your actual JWT authentication logic.
+    
+    Args:
+        request: FastAPI request object
+        
+    Returns:
+        User object if authenticated, None otherwise
+        
+    Note:
+        Replace with your actual JWT authentication logic.
+        This is a placeholder implementation.
     """
-    # Placeholder - implement your JWT verification here
-    # Example: verify token from Authorization header
+    # Example: Extract token from Authorization header
     # token = request.headers.get("Authorization")
     # user = verify_jwt_token(token)
     # return user
-    return request.state.user if hasattr(request.state, 'user') else None
+    
+    return getattr(request.state, 'user', None)
 
 
-async def jwt_required_dependency():
-    """Dependency that requires authentication"""
-    async def dependency(user=Depends(get_current_user)):
-        if not user:
-            raise HTTPException(status_code=401, detail="Authentication required")
-        return user
-    return dependency
+async def require_auth(request: Request) -> User:
+    """
+    Dependency that requires authentication.
+    
+    Args:
+        request: FastAPI request object
+        
+    Returns:
+        Authenticated User object
+        
+    Raises:
+        HTTPException: If user is not authenticated (401)
+    """
+    user = await get_current_user(request)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    return user
 
 
-async def jwt_required_optional_dependency():
-    """Dependency for optional authentication"""
-    async def dependency(user=Depends(get_current_user)):
-        return user
-    return dependency
+# ========================
+# Hook Endpoints
+# ========================
 
-
-@essential_features_bp.get("/api/hooks")
+@essential_features_bp.get(
+    "/hooks",
+    summary="Get filtered hooks",
+    description="Retrieve hooks with optional filtering and sorting"
+)
 async def get_filtered_hooks(
-    q: Optional[str] = Query(None),
-    platform: str = Query("All Platforms"),
-    niche: str = Query("All Niches"),
-    tone: str = Query("All Tones"),
-    sort_by: str = Query("Newest First")
+    q: Optional[str] = Query(None, description="Search query for title, text, or niche"),
+    platform: str = Query("All Platforms", description="Filter by platform"),
+    niche: str = Query("All Niches", description="Filter by niche"),
+    tone: str = Query("All Tones", description="Filter by tone"),
+    sort_by: str = Query("Newest First", description="Sort order"),
+    db: Session = Depends(get_db)
 ):
     """
-    Frontend calls:
-    /api/hooks?q=fitness&platform=YouTube&tone=Emotional&sort_by=Most+Popular
+    Get hooks with filtering and sorting.
+    
+    Example:
+        GET /api/hooks?q=fitness&platform=YouTube&tone=Emotional&sort_by=Most Popular
     """
-
-    search_query = q
-
     hooks = fetch_filtered_hooks_service(
-        search_query=search_query,
+        db=db,
+        search_query=q,
         platform=platform,
         niche=niche,
         tone=tone,
         sort_by=sort_by
     )
-
-    return JSONResponse(content=hooks, status_code=200)
-
-
-@essential_features_bp.post("/api/posts/{post_id}/like")
-async def toggle_like(post_id: int, current_user=Depends(get_current_user)):
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-    result = toggle_like_service(post_id, current_user)
-    return JSONResponse(content=result, status_code=200)
+    
+    return JSONResponse(content=hooks, status_code=status.HTTP_200_OK)
 
 
-@essential_features_bp.post("/api/hooksrefresh")
-async def refresh_hooks():
-    hooks = refresh_hooks_service()
-    return JSONResponse(content=hooks, status_code=200)
+@essential_features_bp.post(
+    "/hooksrefresh",
+    summary="Refresh hooks",
+    description="Reload all hooks without filters"
+)
+async def refresh_hooks(db: Session = Depends(get_db)):
+    """Refresh and return all hooks."""
+    hooks = refresh_hooks_service(db)
+    return JSONResponse(content=hooks, status_code=status.HTTP_200_OK)
 
 
-@essential_features_bp.post("/api/hooks/reset-filters")
-async def reset_filters():
-    hooks = reset_filters_service()
-    return JSONResponse(content=hooks, status_code=200)
+@essential_features_bp.post(
+    "/hooks/reset-filters",
+    summary="Reset filters",
+    description="Clear all filters and return all hooks"
+)
+async def reset_filters(db: Session = Depends(get_db)):
+    """Reset filters and return all hooks."""
+    hooks = reset_filters_service(db)
+    return JSONResponse(content=hooks, status_code=status.HTTP_200_OK)
 
 
-@essential_features_bp.post("/api/hooks/{hook_id}/view")
-async def record_hook_view(hook_id: int):
-    res = record_hook_view_service(hook_id)
-    return JSONResponse(content=res, status_code=200)
+@essential_features_bp.post(
+    "/hooks/{hook_id}/view",
+    summary="Record hook view",
+    response_model=ViewRecordResponse
+)
+async def record_hook_view(
+    hook_id: int,
+    db: Session = Depends(get_db)
+):
+    """Record a view event for a specific hook."""
+    result = record_hook_view_service(db, hook_id)
+    return JSONResponse(content=result, status_code=status.HTTP_200_OK)
 
 
-@essential_features_bp.post("/api/hooks/{hook_id}/like")
-async def like_hook(hook_id: int, current_user=Depends(get_current_user)):
-    res = like_hook_service(hook_id)
-    return JSONResponse(content=res, status_code=200)
+@essential_features_bp.post(
+    "/hooks/{hook_id}/like",
+    summary="Like a hook",
+    response_model=ViewRecordResponse
+)
+async def like_hook(
+    hook_id: int,
+    db: Session = Depends(get_db)
+):
+    """Increment the like count for a hook."""
+    result = like_hook_service(db, hook_id)
+    return JSONResponse(content=result, status_code=status.HTTP_200_OK)
 
 
-@essential_features_bp.post("/api/hooks/{hook_id}/copy")
-async def record_hook_copy(hook_id: int):
-    res = record_hook_copy_service(hook_id)
-    return JSONResponse(content=res, status_code=200)
+@essential_features_bp.post(
+    "/hooks/{hook_id}/copy",
+    summary="Record hook copy",
+    response_model=CopyRecordResponse
+)
+async def record_hook_copy(
+    hook_id: int,
+    db: Session = Depends(get_db)
+):
+    """Record when a user copies a hook."""
+    result = record_hook_copy_service(db, hook_id)
+    return JSONResponse(content=result, status_code=status.HTTP_200_OK)
 
 
-@essential_features_bp.post("/api/hooks/{hook_id}/comment")
+@essential_features_bp.post(
+    "/hooks/{hook_id}/comment",
+    summary="Add comment to hook",
+    response_model=CommentAddResponse,
+    status_code=status.HTTP_201_CREATED
+)
 async def add_comment(
     hook_id: int,
-    payload: Dict[str, Any] = Body(...),
-    current_user=Depends(get_current_user)
+    payload: CommentCreateRequest,
+    request: Request,
+    db: Session = Depends(get_db)
 ):
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required")
+    """Add a comment to a specific hook. Requires authentication."""
+    user = await require_auth(request)
     
-    text = payload.get("text", "").strip()
-    if not text:
-        return JSONResponse(content={"message": "Comment text required."}, status_code=400)
-
-    res = add_hook_comment_service(hook_id, current_user.id, text)
-    return JSONResponse(content=res, status_code=201)
-
-
-@essential_features_bp.post("/api/posts/{post_id}/save")
-async def toggle_save(post_id: int, current_user=Depends(get_current_user)):
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-    result = toggle_save_service(post_id, current_user)
-    return JSONResponse(content=result, status_code=200)
+    result = add_hook_comment_service(
+        db=db,
+        hook_id=hook_id,
+        user_id=user.id,
+        comment_text=payload.text
+    )
+    return JSONResponse(content=result, status_code=status.HTTP_201_CREATED)
 
 
-@essential_features_bp.post("/api/posts/{post_id}/share")
-async def record_share(post_id: int, current_user=Depends(get_current_user)):
-    result = record_share_service(post_id)
-    return JSONResponse(content=result, status_code=202)
+# ========================
+# Post Endpoints
+# ========================
+
+@essential_features_bp.post(
+    "/posts/{post_id}/like",
+    summary="Toggle post like",
+    response_model=LikeToggleResponse
+)
+async def toggle_like(
+    post_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Toggle like status for a post. Requires authentication."""
+    user = await require_auth(request)
+    result = toggle_like_service(db, post_id, user)
+    return JSONResponse(content=result, status_code=status.HTTP_200_OK)
 
 
-# -------------------------------------------
-#   DASHBOARD METRICS API
-# -------------------------------------------
-@essential_features_bp.get("/api/dashboard/metrics")
-async def dashboard_metrics():
-    data = get_dashboard_metrics_service()
-    return JSONResponse(content=data, status_code=200)
+@essential_features_bp.post(
+    "/posts/{post_id}/save",
+    summary="Toggle post save",
+    response_model=SaveToggleResponse
+)
+async def toggle_save(
+    post_id: int,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Toggle save/bookmark status for a post. Requires authentication."""
+    user = await require_auth(request)
+    result = toggle_save_service(db, post_id, user)
+    return JSONResponse(content=result, status_code=status.HTTP_200_OK)
 
 
-def login_required(f):
+@essential_features_bp.post(
+    "/posts/{post_id}/share",
+    summary="Record post share",
+    response_model=ShareRecordResponse,
+    status_code=status.HTTP_202_ACCEPTED
+)
+async def record_share(
+    post_id: int,
+    db: Session = Depends(get_db)
+):
+    """Record a share event for a post."""
+    result = record_share_service(db, post_id)
+    return JSONResponse(content=result, status_code=status.HTTP_202_ACCEPTED)
+
+
+# ========================
+# Dashboard Endpoints
+# ========================
+
+@essential_features_bp.get(
+    "/dashboard/metrics",
+    summary="Get basic dashboard metrics",
+    description="Get overall dashboard metrics (no user filtering)"
+)
+async def dashboard_metrics(db: Session = Depends(get_db)):
+    """Get basic dashboard metrics for all hooks."""
+    data = get_dashboard_metrics_service(db)
+    return JSONResponse(content=data, status_code=status.HTTP_200_OK)
+
+
+# ========================
+# User Metrics Endpoints
+# ========================
+
+@metrics_bp.get(
+    "/user/metrics",
+    response_model=MetricsResponseSchema,
+    summary="Get user dashboard metrics",
+    description="Retrieve aggregated metrics for the authenticated user"
+)
+async def get_user_metrics(
+    request: Request,
+    db: Session = Depends(get_db)
+):
     """
-    Decorator to ensure user is authenticated.
-    Assumes authentication middleware sets g.user
-    """
-    @wraps(f)
-    async def decorated_function(*args, **kwargs):
-        request = kwargs.get('request')
-        if not hasattr(request.state, 'user') or not request.state.user:
-            return JSONResponse(
-                content={
-                    "status": "error",
-                    "message": "Authentication required",
-                    "code": "UNAUTHORIZED"
-                },
-                status_code=HTTPStatus.UNAUTHORIZED
-            )
-        return await f(*args, **kwargs)
-    return decorated_function
-
-
-@metrics_bp.get("/user/metrics")
-async def get_dashboard_metrics(request: Request):
-    """
-    GET /api/v1/user/metrics
-    
-    Retrieves aggregated dashboard metrics for the authenticated user.
+    Get comprehensive dashboard metrics for the authenticated user.
     
     Returns:
-        200: Success with metrics data
-        401: Unauthorized (not authenticated)
-        500: Internal server error
-        
-    Response Example:
-        {
-            "status": "success",
-            "data": {
-                "totalGenerated": 150,
-                "totalSaved": 45,
-                "totalGeneratedScore": 7250,
-                "youtubeCount": 80,
-                "redditCount": 50,
-                "instagramCount": 20
-            }
-        }
+        - totalGenerated: Total hooks generated
+        - totalSaved: Total hooks saved
+        - totalGeneratedScore: Sum of all scores
+        - Platform-specific counts
     """
+    user = await require_auth(request)
+    
     try:
-        # Get user ID from authentication context
-        if not hasattr(request.state, 'user') or not request.state.user:
-            return JSONResponse(
-                content={
-                    "status": "error",
-                    "message": "Authentication required",
-                    "code": "UNAUTHORIZED"
-                },
-                status_code=HTTPStatus.UNAUTHORIZED
-            )
+        metrics_service = MetricsService(db)
+        metrics_data = metrics_service.get_dashboard_metrics(user.id)
         
-        user_id = request.state.user.id
-        
-        # Fetch metrics from service
-        metrics_data = metrics_service.get_dashboard_metrics(user_id)
-        
-        # Validate and serialize response
-        schema = MetricsResponseSchema()
-        response = schema.dump({
-            "status": "success",
-            "data": metrics_data
-        })
-        
-        return JSONResponse(content=response, status_code=HTTPStatus.OK)
+        return JSONResponse(
+            content={
+                "status": "success",
+                "data": metrics_data
+            },
+            status_code=status.HTTP_200_OK
+        )
         
     except Exception as e:
-        # Log error (use your logging system)
-        # logger.error(f"Error fetching metrics for user {user_id}: {str(e)}")
-        
-        error_schema = ErrorResponseSchema()
-        error_response = error_schema.dump({
-            "status": "error",
-            "message": "Failed to retrieve dashboard metrics",
-            "code": "METRICS_FETCH_FAILED"
-        })
-        
-        return JSONResponse(content=error_response, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
+        return JSONResponse(
+            content={
+                "status": "error",
+                "message": "Failed to retrieve dashboard metrics",
+                "code": "METRICS_FETCH_FAILED",
+                "details": {"error": str(e)}
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
-@metrics_bp.get("/user/metrics/platform/{platform}")
-async def get_platform_metrics(platform: str, request: Request):
+@metrics_bp.get(
+    "/user/metrics/platform/{platform}",
+    response_model=PlatformBreakdownSchema,
+    summary="Get platform-specific metrics",
+    description="Retrieve detailed metrics for a specific platform"
+)
+async def get_platform_metrics(
+    platform: str,
+    request: Request,
+    db: Session = Depends(get_db)
+):
     """
-    GET /api/v1/user/metrics/platform/<platform>
-    
-    Retrieves detailed metrics for a specific platform.
+    Get metrics breakdown for a specific platform (YouTube, Reddit, Instagram).
     
     Args:
-        platform: Platform name (youtube, reddit, instagram)
-        
-    Returns:
-        200: Success with platform-specific metrics
-        400: Invalid platform name
-        401: Unauthorized
-        404: No data found for platform
-        500: Internal server error
+        platform: Platform name (case-insensitive)
     """
-    # Validate platform parameter
+    # Validate platform
     valid_platforms = ["YouTube", "Reddit", "Instagram"]
     platform_capitalized = platform.capitalize()
     
@@ -284,24 +364,14 @@ async def get_platform_metrics(platform: str, request: Request):
                 "message": f"Invalid platform. Must be one of: {', '.join(valid_platforms)}",
                 "code": "INVALID_PLATFORM"
             },
-            status_code=HTTPStatus.BAD_REQUEST
+            status_code=status.HTTP_400_BAD_REQUEST
         )
     
+    user = await require_auth(request)
+    
     try:
-        if not hasattr(request.state, 'user') or not request.state.user:
-            return JSONResponse(
-                content={
-                    "status": "error",
-                    "message": "Authentication required",
-                    "code": "UNAUTHORIZED"
-                },
-                status_code=HTTPStatus.UNAUTHORIZED
-            )
-        
-        user_id = request.state.user.id
-        
-        # Fetch platform-specific breakdown
-        platform_data = metrics_service.get_platform_breakdown(user_id, platform_capitalized)
+        metrics_service = MetricsService(db)
+        platform_data = metrics_service.get_platform_breakdown(user.id, platform_capitalized)
         
         if not platform_data:
             return JSONResponse(
@@ -310,54 +380,47 @@ async def get_platform_metrics(platform: str, request: Request):
                     "message": f"No data found for platform: {platform_capitalized}",
                     "code": "PLATFORM_DATA_NOT_FOUND"
                 },
-                status_code=HTTPStatus.NOT_FOUND
+                status_code=status.HTTP_404_NOT_FOUND
             )
         
-        schema = PlatformBreakdownSchema()
-        response = schema.dump({
-            "status": "success",
-            "data": platform_data
-        })
-        
-        return JSONResponse(content=response, status_code=HTTPStatus.OK)
+        return JSONResponse(
+            content={
+                "status": "success",
+                "data": platform_data
+            },
+            status_code=status.HTTP_200_OK
+        )
         
     except Exception as e:
-        error_schema = ErrorResponseSchema()
-        error_response = error_schema.dump({
-            "status": "error",
-            "message": "Failed to retrieve platform metrics",
-            "code": "PLATFORM_METRICS_FETCH_FAILED"
-        })
-        
-        return JSONResponse(content=error_response, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
+        return JSONResponse(
+            content={
+                "status": "error",
+                "message": "Failed to retrieve platform metrics",
+                "code": "PLATFORM_METRICS_FETCH_FAILED",
+                "details": {"error": str(e)}
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
-@metrics_bp.get("/user/metrics/summary")
-async def get_metrics_summary(request: Request):
+@metrics_bp.get(
+    "/user/metrics/summary",
+    summary="Get metrics summary",
+    description="Get simplified metrics summary for quick views"
+)
+async def get_metrics_summary(
+    request: Request,
+    db: Session = Depends(get_db)
+):
     """
-    GET /api/v1/user/metrics/summary
-    
-    Returns a simplified summary of user metrics (total generated and saved only).
-    Useful for quick dashboard previews or mobile views.
-    
-    Returns:
-        200: Success with summary data
-        401: Unauthorized
-        500: Internal server error
+    Get a simplified summary of user metrics.
+    Useful for dashboard previews or mobile views.
     """
+    user = await require_auth(request)
+    
     try:
-        if not hasattr(request.state, 'user') or not request.state.user:
-            return JSONResponse(
-                content={
-                    "status": "error",
-                    "message": "Authentication required",
-                    "code": "UNAUTHORIZED"
-                },
-                status_code=HTTPStatus.UNAUTHORIZED
-            )
-        
-        user_id = request.state.user.id
-        metrics_data = metrics_service.get_dashboard_metrics(user_id)
+        metrics_service = MetricsService(db)
+        metrics_data = metrics_service.get_dashboard_metrics(user.id)
         
         # Return only summary fields
         summary = {
@@ -371,42 +434,52 @@ async def get_metrics_summary(request: Request):
                 "status": "success",
                 "data": summary
             },
-            status_code=HTTPStatus.OK
+            status_code=status.HTTP_200_OK
         )
         
     except Exception as e:
-        error_schema = ErrorResponseSchema()
-        error_response = error_schema.dump({
-            "status": "error",
-            "message": "Failed to retrieve metrics summary",
-            "code": "SUMMARY_FETCH_FAILED"
-        })
-        
-        return JSONResponse(content=error_response, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
+        return JSONResponse(
+            content={
+                "status": "error",
+                "message": "Failed to retrieve metrics summary",
+                "code": "SUMMARY_FETCH_FAILED",
+                "details": {"error": str(e)}
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
-# Error handlers for the blueprint
-@metrics_bp.exception_handler(404)
-async def not_found(request: Request, exc: HTTPException):
-    """Handle 404 errors within this blueprint"""
-    return JSONResponse(
-        content={
-            "status": "error",
-            "message": "Resource not found",
-            "code": "NOT_FOUND"
-        },
-        status_code=HTTPStatus.NOT_FOUND
-    )
+# ========================
+# Error Handlers (exported)
+# NOTE: APIRouter does not support `exception_handler` decorator. These
+# handler functions are provided for registration on the FastAPI `app`
+# via `app.add_exception_handler` (see `app/main.py`).
+# ========================
+
+async def not_found_handler(request: Request, exc: HTTPException):
+    """Handle 404 errors."""
+    # Only handle actual 404 HTTPExceptions; re-raise others
+    if getattr(exc, "status_code", None) == status.HTTP_404_NOT_FOUND:
+        return JSONResponse(
+            content={
+                "status": "error",
+                "message": "Resource not found",
+                "code": "NOT_FOUND"
+            },
+            status_code=status.HTTP_404_NOT_FOUND
+        )
+
+    raise exc
 
 
-@metrics_bp.exception_handler(500)
-async def internal_error(request: Request, exc: HTTPException):
-    """Handle 500 errors within this blueprint"""
+async def internal_error_handler(request: Request, exc: Exception):
+    """Handle internal server errors (500)."""
     return JSONResponse(
         content={
             "status": "error",
             "message": "Internal server error",
-            "code": "INTERNAL_ERROR"
+            "code": "INTERNAL_ERROR",
+            "details": {"error": str(exc)}
         },
-        status_code=HTTPStatus.INTERNAL_SERVER_ERROR
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
     )

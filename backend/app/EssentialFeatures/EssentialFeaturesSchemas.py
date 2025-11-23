@@ -1,125 +1,49 @@
-# essential_features/models.py
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship
-from ..core.database import Base
-
-
-class EssentialHook(Base):
-    __tablename__ = "essential_hooks"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(255), nullable=False)
-    score = Column(Integer, default=0)
-    platform = Column(String(50))
-
-    # Relationships
-    comments = relationship("EssentialHookComment", back_populates="hook")
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "platform": self.platform,
-            "score": self.score
-        }
-
-
-class EssentialPost(Base):
-    __tablename__ = "essential_posts"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(400), nullable=False)
-    content = Column(Text, nullable=True)
-    like_count = Column(Integer, default=0)
-    share_count = Column(Integer, default=0)
-
-    # Relationships
-    likes = relationship("EssentialPostLike", back_populates="post")
-    saves = relationship("EssentialPostSave", back_populates="post")
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "title": self.title,
-            "content": self.content,
-            "like_count": self.like_count,
-            "share_count": self.share_count
-        }
-
-
-class EssentialPostLike(Base):
-    __tablename__ = "essential_post_likes"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    post_id = Column(Integer, ForeignKey("essential_posts.id"))
-
-    # Relationships
-    user = relationship("User")
-    post = relationship("EssentialPost", back_populates="likes")
-
-    __table_args__ = (
-        UniqueConstraint("user_id", "post_id", name="unique_user_post_like"),
-    )
-
-
-class EssentialPostSave(Base):
-    __tablename__ = "essential_post_saves"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    post_id = Column(Integer, ForeignKey("essential_posts.id"))
-
-    # Relationships
-    user = relationship("User")
-    post = relationship("EssentialPost", back_populates="saves")
-
-    __table_args__ = (
-        UniqueConstraint("user_id", "post_id", name="unique_user_post_save"),
-    )
-
-
-class EssentialHookComment(Base):
-    __tablename__ = "essential_hook_comments"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    hook_id = Column(Integer, ForeignKey("essential_hooks.id"))
-    user_id = Column(Integer, ForeignKey("users.id"))
-    comment_text = Column(Text, nullable=False)
-    
-    # Relationships
-    hook = relationship("EssentialHook", back_populates="comments")
-    user = relationship("User")
-
-
 # essential_features/schemas.py
+"""
+Pydantic schemas for request/response validation in Essential Features module.
+Defines data validation, serialization, and API documentation models.
+"""
+
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Dict, Any, Literal
+from typing import Optional, Dict, Any, Literal, List
 from enum import Enum
 
 
+# ========================
+# Enums
+# ========================
+
 class PlatformEnum(str, Enum):
-    """Enum for valid platforms"""
+    """Valid platform options."""
     YOUTUBE = "YouTube"
     REDDIT = "Reddit"
     INSTAGRAM = "Instagram"
 
 
+class StatusEnum(str, Enum):
+    """Valid hook status options."""
+    GENERATED = "Generated"
+    SAVED = "Saved"
+
+
+# ========================
 # Request Schemas
+# ========================
+
 class EssentialHookCommentCreate(BaseModel):
-    """Schema for creating a hook comment"""
-    hook_id: int = Field(..., gt=0)
-    comment_text: str = Field(..., min_length=1, max_length=2000)
+    """Schema for creating a hook comment."""
+    hook_id: int = Field(..., gt=0, description="ID of the hook to comment on")
+    comment_text: str = Field(..., min_length=1, max_length=2000, description="Comment text")
 
 
 class PlatformParamSchema(BaseModel):
-    """Schema for validating platform parameter"""
+    """Schema for validating platform parameter."""
     platform: str = Field(..., description="Platform name (case-insensitive)")
     
     @field_validator('platform')
     @classmethod
     def validate_and_capitalize_platform(cls, v: str) -> str:
-        """Validate and capitalize platform name"""
+        """Validate and capitalize platform name."""
         valid_platforms = ["youtube", "reddit", "instagram"]
         if v.lower() not in valid_platforms:
             raise ValueError(
@@ -128,9 +52,27 @@ class PlatformParamSchema(BaseModel):
         return v.capitalize()
 
 
+class CommentCreateRequest(BaseModel):
+    """Schema for comment creation request body."""
+    text: str = Field(..., min_length=1, max_length=2000, description="Comment text")
+
+
+# ========================
 # Response Schemas
+# ========================
+
+class UserSchema(BaseModel):
+    """Schema for User response."""
+    id: int
+    username: str
+    email: str
+    
+    class Config:
+        from_attributes = True
+
+
 class EssentialHookCommentSchema(BaseModel):
-    """Schema for Essential Hook Comment"""
+    """Schema for Essential Hook Comment response."""
     id: int
     hook_id: int
     user_id: int
@@ -141,30 +83,64 @@ class EssentialHookCommentSchema(BaseModel):
 
 
 class EssentialHookSchema(BaseModel):
-    """Schema for Essential Hook"""
+    """Schema for Essential Hook response."""
     id: int
+    user_id: Optional[int] = None
     title: str
+    text: Optional[str] = None
     platform: Optional[str] = None
-    score: int
+    niche: Optional[str] = None
+    tone: Optional[str] = None
+    status: str = "Generated"
+    score: int = 0
+    view_count: int = 0
+    like_count: int = 0
+    comment_count: int = 0
+    copy_count: int = 0
+    share_count: int = 0
     
     class Config:
         from_attributes = True
 
 
 class EssentialPostSchema(BaseModel):
-    """Schema for Essential Post"""
+    """Schema for Essential Post response."""
     id: int
     title: str
     content: Optional[str] = None
-    like_count: int
-    share_count: int
+    like_count: int = 0
+    share_count: int = 0
     
     class Config:
         from_attributes = True
 
 
+class EssentialPostLikeSchema(BaseModel):
+    """Schema for Post Like response."""
+    id: int
+    user_id: int
+    post_id: int
+    
+    class Config:
+        from_attributes = True
+
+
+class EssentialPostSaveSchema(BaseModel):
+    """Schema for Post Save response."""
+    id: int
+    user_id: int
+    post_id: int
+    
+    class Config:
+        from_attributes = True
+
+
+# ========================
+# Metrics Schemas
+# ========================
+
 class MetricsDataSchema(BaseModel):
-    """Schema for the metrics data object"""
+    """Schema for the metrics data object."""
     totalGenerated: int = Field(..., ge=0, description="Total number of generated hooks")
     totalSaved: int = Field(..., ge=0, description="Total number of saved hooks")
     totalGeneratedScore: int = Field(..., ge=0, description="Sum of all scores")
@@ -186,7 +162,7 @@ class MetricsDataSchema(BaseModel):
 
 
 class MetricsResponseSchema(BaseModel):
-    """Schema for successful metrics response"""
+    """Schema for successful metrics response."""
     status: Literal["success"] = "success"
     data: MetricsDataSchema
     
@@ -207,7 +183,7 @@ class MetricsResponseSchema(BaseModel):
 
 
 class PlatformDataSchema(BaseModel):
-    """Schema for platform-specific metrics data"""
+    """Schema for platform-specific metrics data."""
     platform: PlatformEnum
     generated: int = Field(..., ge=0)
     saved: int = Field(..., ge=0)
@@ -225,13 +201,13 @@ class PlatformDataSchema(BaseModel):
 
 
 class PlatformBreakdownSchema(BaseModel):
-    """Schema for platform breakdown response"""
+    """Schema for platform breakdown response."""
     status: Literal["success"] = "success"
     data: PlatformDataSchema
 
 
 class MetricsSummarySchema(BaseModel):
-    """Schema for simplified metrics summary"""
+    """Schema for simplified metrics summary."""
     totalGenerated: int = Field(..., ge=0)
     totalSaved: int = Field(..., ge=0)
     totalScore: int = Field(..., ge=0)
@@ -246,8 +222,19 @@ class MetricsSummarySchema(BaseModel):
         }
 
 
+# ========================
+# Generic Response Schemas
+# ========================
+
+class SuccessResponseSchema(BaseModel):
+    """Generic success response."""
+    status: Literal["success"] = "success"
+    message: str
+    data: Optional[Dict[str, Any]] = None
+
+
 class ErrorResponseSchema(BaseModel):
-    """Schema for error responses"""
+    """Schema for error responses."""
     status: Literal["error"] = "error"
     message: str
     code: str
@@ -264,3 +251,47 @@ class ErrorResponseSchema(BaseModel):
         }
 
 
+# ========================
+# Action Response Schemas
+# ========================
+
+class LikeToggleResponse(BaseModel):
+    """Response for like toggle action."""
+    message: str
+    is_liked: bool
+    new_like_count: int
+
+
+class SaveToggleResponse(BaseModel):
+    """Response for save toggle action."""
+    message: str
+    is_saved: bool
+
+
+class ShareRecordResponse(BaseModel):
+    """Response for share recording."""
+    message: str
+
+
+class ViewRecordResponse(BaseModel):
+    """Response for view recording."""
+    message: str
+    total_views: int
+
+
+class CommentAddResponse(BaseModel):
+    """Response for comment addition."""
+    message: str
+    comments: int
+
+
+class CopyRecordResponse(BaseModel):
+    """Response for copy recording."""
+    message: str
+    copies: int
+
+
+class HookListResponse(BaseModel):
+    """Response for hook list queries."""
+    hooks: List[EssentialHookSchema]
+    total: int

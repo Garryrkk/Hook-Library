@@ -4,7 +4,7 @@ from typing import List, Optional
 from datetime import datetime
 
 from .userprofileservice import UserProfileService
-from UserProfile.userprofileschemas import (
+from .userprofileschemas import (
     UserProfile, ProfileSummary, UserInfoUpdate, ProfilePictureUpdate,
     CollectionCreate, CollectionUpdate, Collection, AddHookToCollection,
     PasswordChange, NotificationPreferences, DisplayPreferences,
@@ -14,7 +14,7 @@ from UserProfile.userprofileschemas import (
     ConnectedAccount, ScrapeRecord
 )
 from ..core.database import get_db
-from ...Auth.authroutes import get_current_user  # Your auth dependency
+from app.Auth.authroutes import get_current_user  # Your auth dependency
 
 
 router = APIRouter(prefix="/api/profile", tags=["User Profile"])
