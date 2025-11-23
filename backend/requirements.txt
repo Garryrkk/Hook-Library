@@ -8,3 +8,5 @@ sentence-transformers
 beautifulsoup4
 requests
 PyJWT
+pyotp
+passlib[bcrypt]
