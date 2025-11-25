@@ -6,7 +6,7 @@ Defines database schema for hooks, posts, comments, likes, and saves.
 
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
-from app.core.database import Base
+from ..core.database import Base
 
 
 class User(Base):

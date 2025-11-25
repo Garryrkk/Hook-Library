@@ -7,6 +7,12 @@ import io
 import openai
 from collections import defaultdict, Counter
 
+from .models import (
+    User, SavedHook, Hook, ScrapeHistory, CollectionModel, 
+    CollectionHook, HookCopy, ActivityLog, ConnectedAccount,
+    UserSettings  # <-- Add this import
+)
+
 from ..Settings.Settingsreportsschemas import (
     UserSettingsUpdate, UserSettingsResponse, ReportGenerationRequest,
     WeeklyReportData, MonthlyReportData, AIGenerationRequest,

@@ -3,10 +3,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import reddit, youtube, instagram
-from app.EssentialFeatures.EssentialFeaturesRoutes import essential_features_bp, metrics_bp
+from app.EssentialFeatures.EssentialFeaturesRoutes import (
+    essential_features_bp,
+    metrics_bp,
+    metrics_not_found,
+    metrics_internal_error,
+)
 from app.UserProfile.userprofileroutes import router as user_profile_router
 from app.Settings.Settingsreportsroutes import router as settings_reports_router
-from ..Auth.authroutes import router as auth_router
+from app.Auth.authroutes import router as auth_router
 
 app = FastAPI(title="Hook Library API")
 
@@ -28,6 +33,10 @@ app.include_router(user_profile_router)
 app.include_router(settings_reports_router)
 app.include_router(essential_features_bp)
 app.include_router(metrics_bp)
+
+# Register error handlers exported by the metrics module at app-level
+app.add_exception_handler(404, metrics_not_found)
+app.add_exception_handler(500, metrics_internal_error)
 
 @app.get("/")
 def root():
