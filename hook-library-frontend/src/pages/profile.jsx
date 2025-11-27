@@ -17,6 +17,11 @@ const ProfilePage = () => {
   const [publicProfile, setPublicProfile] = useState(true);
   const [showActivity, setShowActivity] = useState(false);
   const [allowFollowing, setAllowFollowing] = useState(true);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editedName, setEditedName] = useState('Garima Kalra');
+  const [editedEmail, setEditedEmail] = useState('garima@hookbank.com');
+  const [editedBio, setEditedBio] = useState('Hook Master | Content Creator | Pro Plan Member');
 
   const stats = [
     { label: 'Hooks Saved', value: '247', emoji: '💾', color: '#ff0080' },
@@ -24,6 +29,85 @@ const ProfilePage = () => {
     { label: 'Collections', value: '12', emoji: '📁', color: '#ffff00' },
     { label: 'Day Streak', value: '7', emoji: '🔥', color: '#ff00ff' },
   ];
+
+  const handleShareProfile = () => {
+    setShowShareModal(true);
+  };
+
+  const shareToWhatsApp = () => {
+    const profileUrl = `${window.location.origin}/profile/${userName.toLowerCase().replace(/\s+/g, '-')}`;
+    const text = `Check out my Hook Bank profile! ${profileUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const shareToInstagram = () => {
+    alert('Instagram sharing: Copy the link and paste it in your Instagram bio or story!');
+    const profileUrl = `${window.location.origin}/profile/${userName.toLowerCase().replace(/\s+/g, '-')}`;
+    navigator.clipboard.writeText(profileUrl);
+  };
+
+  const shareToTwitter = () => {
+    const profileUrl = `${window.location.origin}/profile/${userName.toLowerCase().replace(/\s+/g, '-')}`;
+    const text = `Check out my Hook Bank profile!`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(profileUrl)}`, '_blank');
+  };
+
+  const shareToFacebook = () => {
+    const profileUrl = `${window.location.origin}/profile/${userName.toLowerCase().replace(/\s+/g, '-')}`;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(profileUrl)}`, '_blank');
+  };
+
+  const shareToLinkedIn = () => {
+    const profileUrl = `${window.location.origin}/profile/${userName.toLowerCase().replace(/\s+/g, '-')}`;
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(profileUrl)}`, '_blank');
+  };
+
+  const shareToEmail = () => {
+    const profileUrl = `${window.location.origin}/profile/${userName.toLowerCase().replace(/\s+/g, '-')}`;
+    const subject = 'Check out my Hook Bank profile!';
+    const body = `Hi,\n\nCheck out my Hook Bank profile: ${profileUrl}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  const copyProfileLink = () => {
+    const profileUrl = `${window.location.origin}/profile/${userName.toLowerCase().replace(/\s+/g, '-')}`;
+    navigator.clipboard.writeText(profileUrl);
+    alert('Profile link copied to clipboard!');
+  };
+
+  const handleEditProfile = () => {
+    setEditedName(userName);
+    setEditedEmail('garima@hookbank.com');
+    setShowEditModal(true);
+  };
+
+  const saveProfileChanges = () => {
+    setUserName(editedName);
+    setShowEditModal(false);
+    alert('Profile updated successfully!');
+  };
+
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      alert('Logging out...');
+      // Add your logout logic here
+      // e.g., window.location.href = '/login';
+    }
+  };
+
+  const handleProfilePictureUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        alert(`Profile picture "${file.name}" selected! (Upload functionality would be implemented here)`);
+        // Add your upload logic here
+      }
+    };
+    input.click();
+  };
 
   const ToggleSwitch = ({ checked, onChange }) => (
     <button
@@ -165,22 +249,24 @@ const ProfilePage = () => {
                   G
                 </div>
               </div>
-              <button style={{
-                position: 'absolute',
-                bottom: '5px',
-                right: '5px',
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #cc0066, #ff00ff)',
-                border: '2px solid #000',
-                color: '#fff',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 0 20px rgba(255, 0, 255, 0.6)'
-              }}>
+              <button 
+                onClick={handleProfilePictureUpload}
+                style={{
+                  position: 'absolute',
+                  bottom: '5px',
+                  right: '5px',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #cc0066, #ff00ff)',
+                  border: '2px solid #000',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 20px rgba(255, 0, 255, 0.6)'
+                }}>
                 <Camera size={20} />
               </button>
             </div>
@@ -219,7 +305,7 @@ const ProfilePage = () => {
                       {userName}
                     </h1>
                     <button
-                      onClick={() => setIsEditingName(true)}
+                      onClick={handleEditProfile}
                       style={{
                         background: 'rgba(204, 0, 102, 0.2)',
                         border: '1px solid #cc0066',
@@ -276,36 +362,40 @@ const ProfilePage = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '12px' }}>
-                <button style={{
-                  background: 'rgba(204, 0, 102, 0.2)',
-                  border: '1px solid #cc0066',
-                  color: '#ff00ff',
-                  padding: '12px 25px',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontFamily: "'Orbitron', monospace"
-                }}>
+                <button 
+                  onClick={handleShareProfile}
+                  style={{
+                    background: 'rgba(204, 0, 102, 0.2)',
+                    border: '1px solid #cc0066',
+                    color: '#ff00ff',
+                    padding: '12px 25px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontFamily: "'Orbitron', monospace"
+                  }}>
                   <Share2 size={16} /> Share Profile
                 </button>
-                <button style={{
-                  background: 'rgba(255, 0, 0, 0.2)',
-                  border: '1px solid #ff0000',
-                  color: '#ff0000',
-                  padding: '12px 25px',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontFamily: "'Orbitron', monospace"
-                }}>
+                <button 
+                  onClick={handleLogout}
+                  style={{
+                    background: 'rgba(255, 0, 0, 0.2)',
+                    border: '1px solid #ff0000',
+                    color: '#ff0000',
+                    padding: '12px 25px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontFamily: "'Orbitron', monospace"
+                  }}>
                   <LogOut size={16} /> Logout
                 </button>
               </div>
@@ -476,6 +566,316 @@ const ProfilePage = () => {
           </p>
         </div>
       </footer>
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }} onClick={() => setShowShareModal(false)}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1a0033 0%, #2d0066 100%)',
+            border: '2px solid #cc0066',
+            borderRadius: '25px',
+            padding: '40px',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 0 60px rgba(204, 0, 102, 0.6)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+              <h2 style={{ color: '#ff00ff', fontSize: '28px', fontWeight: 'bold', margin: 0 }}>
+                Share Profile
+              </h2>
+              <button onClick={() => setShowShareModal(false)} style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#ff00ff',
+                cursor: 'pointer',
+                padding: '5px'
+              }}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
+              <button onClick={shareToWhatsApp} style={{
+                background: 'rgba(37, 211, 102, 0.2)',
+                border: '2px solid #25D366',
+                borderRadius: '15px',
+                padding: '20px',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px',
+                transition: 'all 0.3s'
+              }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <MessageCircle size={32} color="#25D366" />
+                <span style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>WhatsApp</span>
+              </button>
+
+              <button onClick={shareToInstagram} style={{
+                background: 'rgba(225, 48, 108, 0.2)',
+                border: '2px solid #E1306C',
+                borderRadius: '15px',
+                padding: '20px',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px',
+                transition: 'all 0.3s'
+              }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <Instagram size={32} color="#E1306C" />
+                <span style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>Instagram</span>
+              </button>
+
+              <button onClick={shareToTwitter} style={{
+                background: 'rgba(29, 155, 240, 0.2)',
+                border: '2px solid #1DA1F2',
+                borderRadius: '15px',
+                padding: '20px',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px',
+                transition: 'all 0.3s'
+              }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <span style={{ fontSize: '32px' }}>𝕏</span>
+                <span style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>Twitter</span>
+              </button>
+
+              <button onClick={shareToFacebook} style={{
+                background: 'rgba(24, 119, 242, 0.2)',
+                border: '2px solid #1877F2',
+                borderRadius: '15px',
+                padding: '20px',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px',
+                transition: 'all 0.3s'
+              }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <span style={{ fontSize: '32px', color: '#1877F2' }}>f</span>
+                <span style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>Facebook</span>
+              </button>
+
+              <button onClick={shareToLinkedIn} style={{
+                background: 'rgba(10, 102, 194, 0.2)',
+                border: '2px solid #0A66C2',
+                borderRadius: '15px',
+                padding: '20px',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px',
+                transition: 'all 0.3s'
+              }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <span style={{ fontSize: '32px', color: '#0A66C2', fontWeight: 'bold' }}>in</span>
+                <span style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>LinkedIn</span>
+              </button>
+
+              <button onClick={shareToEmail} style={{
+                background: 'rgba(234, 67, 53, 0.2)',
+                border: '2px solid #EA4335',
+                borderRadius: '15px',
+                padding: '20px',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px',
+                transition: 'all 0.3s'
+              }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                 onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <Mail size={32} color="#EA4335" />
+                <span style={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}>Email</span>
+              </button>
+            </div>
+
+            <button onClick={copyProfileLink} style={{
+              background: 'rgba(204, 0, 102, 0.3)',
+              border: '2px solid #cc0066',
+              borderRadius: '15px',
+              padding: '15px',
+              width: '100%',
+              marginTop: '20px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              color: '#ff00ff',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              fontFamily: "'Orbitron', monospace"
+            }}>
+              <Copy size={20} />
+              Copy Profile Link
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Profile Modal */}
+      {showEditModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }} onClick={() => setShowEditModal(false)}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1a0033 0%, #2d0066 100%)',
+            border: '2px solid #cc0066',
+            borderRadius: '25px',
+            padding: '40px',
+            maxWidth: '550px',
+            width: '90%',
+            boxShadow: '0 0 60px rgba(204, 0, 102, 0.6)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+              <h2 style={{ color: '#ff00ff', fontSize: '28px', fontWeight: 'bold', margin: 0 }}>
+                Edit Profile
+              </h2>
+              <button onClick={() => setShowEditModal(false)} style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#ff00ff',
+                cursor: 'pointer',
+                padding: '5px'
+              }}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+              <div>
+                <label style={{ color: '#bb86fc', fontSize: '14px', fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(204, 0, 102, 0.1)',
+                    border: '2px solid #cc0066',
+                    borderRadius: '12px',
+                    padding: '15px',
+                    color: '#fff',
+                    fontSize: '16px',
+                    outline: 'none',
+                    fontFamily: "'Orbitron', monospace"
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ color: '#bb86fc', fontSize: '14px', fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={editedEmail}
+                  onChange={(e) => setEditedEmail(e.target.value)}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(204, 0, 102, 0.1)',
+                    border: '2px solid #cc0066',
+                    borderRadius: '12px',
+                    padding: '15px',
+                    color: '#fff',
+                    fontSize: '16px',
+                    outline: 'none',
+                    fontFamily: "'Orbitron', monospace"
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ color: '#bb86fc', fontSize: '14px', fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
+                  Bio
+                </label>
+                <textarea
+                  value={editedBio}
+                  onChange={(e) => setEditedBio(e.target.value)}
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(204, 0, 102, 0.1)',
+                    border: '2px solid #cc0066',
+                    borderRadius: '12px',
+                    padding: '15px',
+                    color: '#fff',
+                    fontSize: '16px',
+                    outline: 'none',
+                    fontFamily: "'Orbitron', monospace",
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                <button onClick={saveProfileChanges} style={{
+                  flex: 1,
+                  background: 'linear-gradient(135deg, #cc0066, #ff00ff)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '15px',
+                  cursor: 'pointer',
+                  color: '#fff',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  fontFamily: "'Orbitron', monospace",
+                  boxShadow: '0 0 20px rgba(255, 0, 255, 0.4)'
+                }}>
+                  Save Changes
+                </button>
+                <button onClick={() => setShowEditModal(false)} style={{
+                  flex: 1,
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '2px solid #bb86fc',
+                  borderRadius: '12px',
+                  padding: '15px',
+                  cursor: 'pointer',
+                  color: '#bb86fc',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  fontFamily: "'Orbitron', monospace"
+                }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
