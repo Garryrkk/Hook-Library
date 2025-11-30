@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Menu, X, Youtube, Camera, Mail, Mic, Video, Pen, Copy, Heart, ExternalLink, ChevronDown, Sparkles, TrendingUp, Clock, Filter, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import { Search, Menu, X, Youtube, Camera, Mail, Mic, Video, Pen, Copy, Heart, ExternalLink, ChevronDown, Sparkles, TrendingUp, Clock, Filter, AlertCircle, CheckCircle, Loader, Bell, Check } from 'lucide-react';
 
 // ============================================
 // API CONFIGURATION
@@ -139,7 +139,7 @@ const Notification = ({ message, type, onClose }) => {
 // ============================================
 // NAVBAR COMPONENT
 // ============================================
-const Navbar = ({ onNavigate }) => {
+const Navbar = ({ onNavigate, showNotifications, setShowNotifications, appNotifications }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -170,6 +170,41 @@ const Navbar = ({ onNavigate }) => {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            {/* Bell Icon */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 hover:bg-purple-500/20 rounded-lg transition-colors" 
+                aria-label="Notifications"
+              >
+                <Bell size={20} className="text-gray-300" />
+                {appNotifications && appNotifications.length > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-pink-500 rounded-full animate-pulse" />
+                )}
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-[#0a0a0f] border border-purple-500/30 rounded-lg shadow-lg shadow-purple-500/20 max-h-96 overflow-y-auto z-50">
+                  <div className="p-4">
+                    <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                      <Bell size={16} /> Notifications
+                    </h3>
+                    <div className="space-y-2">
+                      {appNotifications && appNotifications.length > 0 ? (
+                        appNotifications.map(notif => (
+                          <div key={notif.id} className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                            <p className="text-gray-300 text-sm">{notif.message}</p>
+                            <p className="text-gray-500 text-xs mt-1">{notif.time}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-sm">No new notifications</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -619,6 +654,12 @@ const Footer = () => {
 // ============================================
 export default function App() {
   const [notification, setNotification] = useState(null);
+  const [showToast, setShowToast] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [appNotifications, setAppNotifications] = useState([
+    { id: 1, message: 'New hooks available from trending creators', time: '5m ago' },
+    { id: 2, message: 'Your scraping session completed successfully', time: '2h ago' }
+  ]);
   const [stats, setStats] = useState({
     totalHooks: 1247,
     platforms: 3,
@@ -676,6 +717,11 @@ export default function App() {
   ]);
 
   const [filteredHooks, setFilteredHooks] = useState(hooks);
+
+  const showToastNotification = (message, type) => {
+    setShowToast({ message, type });
+    setTimeout(() => setShowToast(null), 3000);
+  };
 
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type });
@@ -869,7 +915,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <Navbar onNavigate={handleNavigate} />
+      <Navbar onNavigate={handleNavigate} showNotifications={showNotifications} setShowNotifications={setShowNotifications} appNotifications={appNotifications} />
       
       <Hero 
         onExplore={() => handleNavigate('explore')} 
@@ -971,6 +1017,28 @@ export default function App() {
       </section>
 
       <Footer />
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: 'rgba(0, 0, 0, 0.95)',
+          border: `2px solid ${showToast.type === 'success' ? '#00ff00' : showToast.type === 'error' ? '#ff0000' : '#00ffff'}`,
+          borderRadius: '10px',
+          padding: '15px 25px',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: `0 0 20px ${showToast.type === 'success' ? '#00ff00' : showToast.type === 'error' ? '#ff0000' : '#00ffff'}`,
+          animation: 'slideIn 0.3s ease-out'
+        }}>
+          {showToast.type === 'success' ? <Check size={20} color="#00ff00" /> : <AlertCircle size={20} color="#00ffff" />}
+          <span style={{ color: '#fff', fontSize: '14px' }}>{showToast.message}</span>
+        </div>
+      )}
     </div>
   );
 }

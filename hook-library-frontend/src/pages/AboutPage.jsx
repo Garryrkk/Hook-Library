@@ -133,7 +133,7 @@ class ApiService {
 // ============================================
 // NAVBAR COMPONENT
 // ============================================
-const Navbar = ({ onLogout }) => {
+const Navbar = ({ onLogout, showNotifications, setShowNotifications, notifications }) => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -168,14 +168,51 @@ const Navbar = ({ onLogout }) => {
             <button className="text-white font-semibold">Profile</button>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleLogout}
-            className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg font-semibold"
-          >
-            Logout
-          </motion.button>
+          <div className="flex items-center space-x-4">
+            {/* Bell Icon with Notifications */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 hover:bg-purple-500/20 rounded-lg transition-colors" 
+                aria-label="Notifications"
+              >
+                <Bell size={20} className="text-purple-400" />
+                {notifications && notifications.length > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-pink-500 rounded-full animate-pulse" />
+                )}
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-[#0a0a0f] border border-purple-500/30 rounded-lg shadow-lg shadow-purple-500/20 max-h-96 overflow-y-auto z-50">
+                  <div className="p-4">
+                    <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                      <Bell size={16} /> Notifications
+                    </h3>
+                    <div className="space-y-2">
+                      {notifications && notifications.length > 0 ? (
+                        notifications.map(notif => (
+                          <div key={notif.id} className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                            <p className="text-gray-300 text-sm">{notif.message}</p>
+                            <p className="text-gray-500 text-xs mt-1">{notif.time}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-sm">No new notifications</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogout}
+              className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg font-semibold"
+            >
+              Logout
+            </motion.button>
+          </div>
         </div>
       </div>
     </nav>
@@ -1138,6 +1175,17 @@ export default function ProfilePage() {
   const [collections, setCollections] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [history, setHistory] = useState([]);
+  const [showToast, setShowToast] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, message: 'Your profile has been updated', time: '5m ago' },
+    { id: 2, message: 'New achievement unlocked: Content Curator', time: '1h ago' }
+  ]);
+
+  const showToastNotification = (message, type) => {
+    setShowToast({ message, type });
+    setTimeout(() => setShowToast(null), 3000);
+  };
 
   useEffect(() => {
     loadData();
@@ -1242,7 +1290,7 @@ export default function ProfilePage() {
         ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff4b8b, #8b5cf6); border-radius: 4px; }
       `}</style>
 
-      <Navbar onLogout={handleLogout} />
+      <Navbar onLogout={handleLogout} showNotifications={showNotifications} setShowNotifications={setShowNotifications} notifications={notifications} />
 
       <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -1278,6 +1326,28 @@ export default function ProfilePage() {
       </main>
 
       <Footer />
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: 'rgba(0, 0, 0, 0.95)',
+          border: `2px solid ${showToast.type === 'success' ? '#00ff00' : showToast.type === 'error' ? '#ff0000' : '#00ffff'}`,
+          borderRadius: '10px',
+          padding: '15px 25px',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: `0 0 20px ${showToast.type === 'success' ? '#00ff00' : showToast.type === 'error' ? '#ff0000' : '#00ffff'}`,
+          animation: 'slideIn 0.3s ease-out'
+        }}>
+          {showToast.type === 'success' ? <Check size={20} color="#00ff00" /> : <AlertCircle size={20} color="#00ffff" />}
+          <span style={{ color: '#fff', fontSize: '14px' }}>{showToast.message}</span>
+        </div>
+      )}
     </div>
   );
 }

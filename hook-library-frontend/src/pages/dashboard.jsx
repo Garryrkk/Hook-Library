@@ -4,7 +4,7 @@ import {
   Search, Menu, X, Youtube, Camera, Mail, Mic, Video, Pen, Copy, Heart, 
   ExternalLink, ChevronDown, Sparkles, TrendingUp, Clock, Filter, Bell,
   Settings, User, RefreshCw, BarChart3, Download, ChevronUp, Trash2,
-  Check, AlertCircle, Loader
+  Check, AlertCircle, Loader, CheckCircle
 } from 'lucide-react';
 
 // ============================================
@@ -13,12 +13,35 @@ import {
 const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
 
 // ============================================
+// TOAST NOTIFICATION COMPONENT
+// ============================================
+const Toast = ({ message, type }) => (
+  message && (
+    <div className={`fixed top-20 right-6 p-4 rounded-lg flex items-center gap-3 shadow-lg z-50 ${
+      type === 'success' ? 'bg-green-500/20 border border-green-500 text-green-300' :
+      type === 'error' ? 'bg-red-500/20 border border-red-500 text-red-300' :
+      'bg-blue-500/20 border border-blue-500 text-blue-300'
+    }`}>
+      {type === 'success' && <CheckCircle size={20} />}
+      {type === 'error' && <AlertCircle size={20} />}
+      {type === 'info' && <AlertCircle size={20} />}
+      <span className="text-sm font-medium">{message}</span>
+    </div>
+  )
+);
+
+// ============================================
 // NAVBAR COMPONENT (Dashboard Version)
 // ============================================
-const Navbar = () => {
+const Navbar = ({ onShowToast }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [notifications, setNotifications] = useState(3);
+  const [notificationsCount, setNotificationsCount] = useState(3);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationsList, setNotificationsList] = useState([
+    { id: 1, message: 'New hooks available from trending creators', time: '10m ago' },
+    { id: 2, message: 'Your saved collection has been updated', time: '2h ago' }
+  ]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -66,12 +89,39 @@ const Navbar = () => {
             </button>
             
             {/* Notifications */}
-            <button className="relative p-2 hover:bg-purple-500/20 rounded-lg transition-colors" aria-label="Notifications">
-              <Bell size={20} className="text-gray-400" />
-              {notifications > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-pink-500 rounded-full animate-pulse" />
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 hover:bg-purple-500/20 rounded-lg transition-colors" 
+                aria-label="Notifications"
+              >
+                <Bell size={20} className="text-gray-400" />
+                {notificationsCount > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-pink-500 rounded-full animate-pulse" />
+                )}
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-[#0a0a0f] border border-purple-500/30 rounded-lg shadow-lg shadow-purple-500/20 max-h-96 overflow-y-auto z-50">
+                  <div className="p-4">
+                    <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                      <Bell size={16} /> Notifications
+                    </h3>
+                    <div className="space-y-2">
+                      {notificationsList.length > 0 ? (
+                        notificationsList.map(notif => (
+                          <div key={notif.id} className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                            <p className="text-gray-300 text-sm">{notif.message}</p>
+                            <p className="text-gray-500 text-xs mt-1">{notif.time}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 text-sm">No new notifications</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
 
             {/* Profile */}
             <button className="flex items-center space-x-2 p-2 hover:bg-purple-500/20 rounded-lg transition-colors">
@@ -664,39 +714,6 @@ const FloatingScraperConsole = ({ logs, onScrape, onClearLogs }) => {
 };
 
 // ============================================
-// TOAST NOTIFICATION COMPONENT
-// ============================================
-const Toast = ({ message, type, onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 3000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  const icons = {
-    success: <Check size={20} className="text-green-400" />,
-    error: <AlertCircle size={20} className="text-red-400" />,
-    info: <Sparkles size={20} className="text-blue-400" />
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -50, x: '-50%' }}
-      animate={{ opacity: 1, y: 0, x: '-50%' }}
-      exit={{ opacity: 0, y: -50, x: '-50%' }}
-      className="fixed top-20 left-1/2 z-50 bg-[#0a0a0f]/95 backdrop-blur-xl border border-purple-500/50 rounded-xl px-6 py-4 shadow-2xl neon-glow"
-    >
-      <div className="flex items-center space-x-3">
-        {icons[type]}
-        <p className="text-white font-semibold">{message}</p>
-        <button onClick={onClose} className="ml-4 text-gray-400 hover:text-white">
-          <X size={16} />
-        </button>
-      </div>
-    </motion.div>
-  );
-};
-
-// ============================================
 // PAGINATION COMPONENT
 // ============================================
 const Pagination = ({ currentPage, totalPages, onPageChange, totalHooks, loadedHooks }) => {
@@ -1037,7 +1054,7 @@ export default function DashboardPage() {
         }
       `}</style>
 
-      <Navbar />
+      <Navbar onShowToast={showToast} />
       <Sidebar 
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -1082,15 +1099,10 @@ export default function DashboardPage() {
       <Footer />
 
       {/* Toast Notifications */}
-      <AnimatePresence>
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
-          />
-        )}
-      </AnimatePresence>
+      <Toast
+        message={toast?.message}
+        type={toast?.type}
+      />
     </div>
   );
 }

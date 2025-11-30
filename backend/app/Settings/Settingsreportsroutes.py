@@ -16,7 +16,7 @@ from ..Settings.Settingsreportsschemas import (
     ScheduledScrapeSettings, ScheduledReportSettings
 )
 from app.core.database import get_db
-from Auth.authroutes import get_current_user
+from app.Auth.authroutes import get_current_user
 
 
 

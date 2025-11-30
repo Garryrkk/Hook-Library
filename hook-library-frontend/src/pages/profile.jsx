@@ -17,6 +17,12 @@ const ProfilePage = () => {
   const [publicProfile, setPublicProfile] = useState(true);
   const [showActivity, setShowActivity] = useState(false);
   const [allowFollowing, setAllowFollowing] = useState(true);
+  const [showToast, setShowToast] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, message: 'Profile updated successfully', time: '5m ago' },
+    { id: 2, message: 'New achievement unlocked', time: '1h ago' }
+  ]);
 
   const stats = [
     { label: 'Hooks Saved', value: '247', emoji: '💾', color: '#ff0080' },
@@ -24,6 +30,11 @@ const ProfilePage = () => {
     { label: 'Collections', value: '12', emoji: '📁', color: '#ffff00' },
     { label: 'Day Streak', value: '7', emoji: '🔥', color: '#ff00ff' },
   ];
+
+  const showToastNotification = (message, type) => {
+    setShowToast({ message, type });
+    setTimeout(() => setShowToast(null), 3000);
+  };
 
   const ToggleSwitch = ({ checked, onChange }) => (
     <button
@@ -61,6 +72,27 @@ const ProfilePage = () => {
       fontFamily: "'Orbitron', monospace",
       width: '100%'
     }}>
+      {showToast && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: 'rgba(0, 0, 0, 0.95)',
+          border: `2px solid ${showToast.type === 'success' ? '#00ff00' : showToast.type === 'error' ? '#ff0000' : '#00ffff'}`,
+          borderRadius: '10px',
+          padding: '15px 25px',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: `0 0 20px ${showToast.type === 'success' ? '#00ff00' : showToast.type === 'error' ? '#ff0000' : '#00ffff'}`,
+          animation: 'slideIn 0.3s ease-out'
+        }}>
+          {showToast.type === 'success' ? <Check size={20} color="#00ff00" /> : <AlertCircle size={20} color="#00ffff" />}
+          <span style={{ color: '#fff', fontSize: '14px' }}>{showToast.message}</span>
+        </div>
+      )}
+
       <nav style={{
         position: 'sticky',
         top: 0,
@@ -91,7 +123,12 @@ const ProfilePage = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             <div style={{ position: 'relative' }}>
-              <Bell size={22} color="#bb86fc" style={{ cursor: 'pointer' }} />
+              <Bell 
+                size={22} 
+                color="#bb86fc" 
+                style={{ cursor: 'pointer' }}
+                onClick={() => setShowNotifications(!showNotifications)}
+              />
               <span style={{
                 position: 'absolute',
                 top: '-5px',
@@ -106,7 +143,42 @@ const ProfilePage = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 'bold'
-              }}>3</span>
+              }}>2</span>
+              {showNotifications && (
+                <div style={{
+                  position: 'absolute',
+                  top: '40px',
+                  right: '0',
+                  background: 'rgba(0, 0, 0, 0.95)',
+                  border: '1px solid rgba(204, 0, 102, 0.5)',
+                  borderRadius: '15px',
+                  minWidth: '300px',
+                  maxHeight: '400px',
+                  overflowY: 'auto',
+                  boxShadow: '0 10px 30px rgba(204, 0, 102, 0.3)',
+                  zIndex: 1000
+                }}>
+                  <div style={{ padding: '15px', borderBottom: '1px solid rgba(204, 0, 102, 0.3)' }}>
+                    <h3 style={{ color: '#ff00ff', fontSize: '14px', margin: 0 }}>Notifications</h3>
+                  </div>
+                  {notifications.map(notif => (
+                    <div key={notif.id} style={{
+                      padding: '12px 15px',
+                      borderBottom: '1px solid rgba(204, 0, 102, 0.2)',
+                      color: '#bb86fc',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.background = 'rgba(204, 0, 102, 0.1)'}
+                    onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                    >
+                      <p style={{ margin: 0, marginBottom: '4px' }}>{notif.message}</p>
+                      <p style={{ margin: 0, color: '#8888aa', fontSize: '11px' }}>{notif.time}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div style={{
               width: '38px',
@@ -276,36 +348,40 @@ const ProfilePage = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '12px' }}>
-                <button style={{
-                  background: 'rgba(204, 0, 102, 0.2)',
-                  border: '1px solid #cc0066',
-                  color: '#ff00ff',
-                  padding: '12px 25px',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontFamily: "'Orbitron', monospace"
-                }}>
+                <button 
+                  onClick={() => showToastNotification('Profile shared!', 'success')}
+                  style={{
+                    background: 'rgba(204, 0, 102, 0.2)',
+                    border: '1px solid #cc0066',
+                    color: '#ff00ff',
+                    padding: '12px 25px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontFamily: "'Orbitron', monospace"
+                  }}>
                   <Share2 size={16} /> Share Profile
                 </button>
-                <button style={{
-                  background: 'rgba(255, 0, 0, 0.2)',
-                  border: '1px solid #ff0000',
-                  color: '#ff0000',
-                  padding: '12px 25px',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontFamily: "'Orbitron', monospace"
-                }}>
+                <button 
+                  onClick={() => showToastNotification('Logging out...', 'info')}
+                  style={{
+                    background: 'rgba(255, 0, 0, 0.2)',
+                    border: '1px solid #ff0000',
+                    color: '#ff0000',
+                    padding: '12px 25px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontFamily: "'Orbitron', monospace"
+                  }}>
                   <LogOut size={16} /> Logout
                 </button>
               </div>

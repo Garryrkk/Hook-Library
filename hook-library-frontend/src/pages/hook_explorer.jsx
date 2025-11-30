@@ -14,8 +14,13 @@ const HookExplorer = () => {
   const [showToast, setShowToast] = useState(null);
   const [visibleHooks, setVisibleHooks] = useState(9);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, message: 'New hook trending in Business niche', time: '5m ago' },
+    { id: 2, message: 'Your saved collection updated', time: '1h ago' }
+  ]);
 
-  const API_BASE = "http://localhost:8000";
+  const API_BASE = "http://localhost:8000/api";
 
   const allHooks = [
     { id: 1, platform: 'youtube', text: '5 mistakes killing your productivity and how to fix them', niche: 'Business', tone: 'Curiosity', likes: 12400, comments: 890, views: 45000, date: '2024-11-20', copied: 234 },
@@ -43,9 +48,9 @@ const HookExplorer = () => {
   const filteredHooks = allHooks.filter(hook => {
     const matchesSearch = hook.text.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          hook.niche.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPlatform = selectedPlatform === 'All' || hook.platform === selectedPlatform.toLowerCase();
-    const matchesNiche = selectedNiche === 'All' || hook.niche === selectedNiche;
-    const matchesTone = selectedTone === 'All' || hook.tone === selectedTone;
+    const matchesPlatform = selectedPlatform === 'All' || hook.platform.toLowerCase() === selectedPlatform.toLowerCase();
+    const matchesNiche = selectedNiche === 'All' || hook.niche.toLowerCase() === selectedNiche.toLowerCase();
+    const matchesTone = selectedTone === 'All' || hook.tone.toLowerCase() === selectedTone.toLowerCase();
     return matchesSearch && matchesPlatform && matchesNiche && matchesTone;
   }).sort((a, b) => {
     switch(sortBy) {
@@ -95,6 +100,20 @@ const HookExplorer = () => {
       case 'instagram': return '#E4405F';
       default: return '#cc0066';
     }
+  };
+
+  const showToastNotification = (message, type) => {
+    setShowToast({ message, type });
+    setTimeout(() => setShowToast(null), 3000);
+  };
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setSelectedPlatform('All');
+    setSelectedNiche('All');
+    setSelectedTone('All');
+    setSortBy('newest');
+    showToastNotification('Filters reset', 'info');
   };
 
   const topHooks = [...allHooks].sort((a, b) => b.copied - a.copied).slice(0, 5);
@@ -188,6 +207,8 @@ const HookExplorer = () => {
               <input
                 type="text"
                 placeholder="Quick search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -201,7 +222,12 @@ const HookExplorer = () => {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
               <div style={{ position: 'relative' }}>
-                <Bell size={22} color="#bb86fc" style={{ cursor: 'pointer' }} />
+                <Bell 
+                  size={22} 
+                  color="#bb86fc" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setShowNotifications(!showNotifications)}
+                />
                 <span style={{
                   position: 'absolute',
                   top: '-5px',
@@ -217,6 +243,41 @@ const HookExplorer = () => {
                   justifyContent: 'center',
                   fontWeight: 'bold'
                 }}>5</span>
+                {showNotifications && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '40px',
+                    right: '0',
+                    background: 'rgba(0, 0, 0, 0.95)',
+                    border: '1px solid rgba(204, 0, 102, 0.5)',
+                    borderRadius: '15px',
+                    minWidth: '300px',
+                    maxHeight: '400px',
+                    overflowY: 'auto',
+                    boxShadow: '0 10px 30px rgba(204, 0, 102, 0.3)',
+                    zIndex: 1000
+                  }}>
+                    <div style={{ padding: '15px', borderBottom: '1px solid rgba(204, 0, 102, 0.3)' }}>
+                      <h3 style={{ color: '#ff00ff', fontSize: '14px', margin: 0 }}>Notifications</h3>
+                    </div>
+                    {notifications.map(notif => (
+                      <div key={notif.id} style={{
+                        padding: '12px 15px',
+                        borderBottom: '1px solid rgba(204, 0, 102, 0.2)',
+                        color: '#bb86fc',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = 'rgba(204, 0, 102, 0.1)'}
+                      onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                      >
+                        <p style={{ margin: 0, marginBottom: '4px' }}>{notif.message}</p>
+                        <p style={{ margin: 0, color: '#8888aa', fontSize: '11px' }}>{notif.time}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div style={{
                 width: '38px',
@@ -709,7 +770,9 @@ const HookExplorer = () => {
             borderRadius: '20px',
             padding: '25px',
             position: 'sticky',
-            top: '100px'
+            top: '100px',
+            maxHeight: 'calc(100vh - 150px)',
+            overflowY: 'auto'
           }}>
             <h3 style={{
               color: '#ff00ff',
@@ -863,46 +926,61 @@ const HookExplorer = () => {
               🪩 Filter Presets
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button style={{
-                background: 'rgba(204, 0, 102, 0.2)',
-                border: '1px solid #cc0066',
-                color: '#ff00ff',
-                padding: '12px',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'bold',
-                textAlign: 'left',
-                fontFamily: "'Orbitron', monospace"
-              }}>
+              <button 
+                onClick={() => {
+                  setSelectedTone('viral');
+                  showToastNotification('Showing viral hooks only', 'success');
+                }}
+                style={{
+                  background: 'rgba(204, 0, 102, 0.2)',
+                  border: '1px solid #cc0066',
+                  color: '#ff00ff',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  textAlign: 'left',
+                  fontFamily: "'Orbitron', monospace"
+                }}>
                 🔥 Viral Hooks Only
               </button>
-              <button style={{
-                background: 'rgba(204, 0, 102, 0.2)',
-                border: '1px solid #cc0066',
-                color: '#ff00ff',
-                padding: '12px',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'bold',
-                textAlign: 'left',
-                fontFamily: "'Orbitron', monospace"
-              }}>
+              <button 
+                onClick={() => {
+                  setSelectedTone('emotional');
+                  showToastNotification('Showing emotional hooks', 'success');
+                }}
+                style={{
+                  background: 'rgba(204, 0, 102, 0.2)',
+                  border: '1px solid #cc0066',
+                  color: '#ff00ff',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  textAlign: 'left',
+                  fontFamily: "'Orbitron', monospace"
+                }}>
                 💔 Emotional Hooks
               </button>
-              <button style={{
-                background: 'rgba(204, 0, 102, 0.2)',
-                border: '1px solid #cc0066',
-                color: '#ff00ff',
-                padding: '12px',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'bold',
-                textAlign: 'left',
-                fontFamily: "'Orbitron', monospace"
-              }}>
+              <button 
+                onClick={() => {
+                  setSelectedTone('educational');
+                  showToastNotification('Showing educational hooks', 'success');
+                }}
+                style={{
+                  background: 'rgba(204, 0, 102, 0.2)',
+                  border: '1px solid #cc0066',
+                  color: '#ff00ff',
+                  padding: '12px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  textAlign: 'left',
+                  fontFamily: "'Orbitron', monospace"
+                }}>
                 🧠 Educational
               </button>
             </div>

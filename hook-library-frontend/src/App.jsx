@@ -9,38 +9,108 @@ import AboutPage from './pages/AboutPage';
 const HookBankLanding = () => {
   const [currentPage, setCurrentPage] = useState('landing');
   const [floatingIcons, setFloatingIcons] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/some-endpoint")  // your FastAPI endpoint
-    const icons = [
-      { Icon: Camera, color: '#ff00ff', id: 1 },
-      { Icon: Mic, color: '#00ffff', id: 2 },
-      { Icon: Mail, color: '#ff0080', id: 3 },
-      { Icon: Pen, color: '#ffff00', id: 4 },
-      { Icon: Instagram, color: '#ff00ff', id: 6 },
-      { Icon: Video, color: '#ff0080', id: 7 },
-      { Icon: Camera, color: '#00ffff', id: 8 },
-      { Icon: Mic, color: '#ffff00', id: 9 },
-      { Icon: Mail, color: '#00ff00', id: 10 },
-      { Icon: Pen, color: '#ff00ff', id: 11 },
-      { Icon: MessageCircle, color: '#ff0080', id: 12 },
-    ];
+        // Error handler for any page
+        window.addEventListener('error', (e) => {
+          console.error('Error:', e);
+          setError(e.message);
+        });
+        return () => window.removeEventListener('error', (e) => {});
+      }, []);
+      // Render error state
+      if (error) {
+        return (
+          <div style={{
+            minHeight: '100vh',
+            background: '#0a0a0f',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#ff0080',
+            fontFamily: "'Orbitron', monospace",
+            flexDirection: 'column',
+            gap: '20px',
+            padding: '20px'
+          }}>
+            <h1 style={{ fontSize: '32px' }}>Error Loading Page</h1>
+            <p style={{ fontSize: '18px', color: '#bb86fc' }}>{error}</p>
+            <button
+              onClick={() => {
+                setError(null);
+                setCurrentPage('landing');
+              }}
+              style={{
+                padding: '12px 24px',
+                background: 'linear-gradient(90deg, #cc0066 0%, #ff00ff 50%, #8000ff 100%)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontFamily: "'Orbitron', monospace"
+              }}
+            >
+              Back to Home
+            </button>
+          </div>
+        );
+      }
+    useEffect(() => {
+      const icons = [
+        { Icon: Camera, color: '#ff00ff', id: 1 },
+        { Icon: Mic, color: '#00ffff', id: 2 },
+        { Icon: Mail, color: '#ff0080', id: 3 },
+        { Icon: Pen, color: '#ffff00', id: 4 },
+        { Icon: Instagram, color: '#ff00ff', id: 6 },
+        { Icon: Video, color: '#ff0080', id: 7 },
+        { Icon: Camera, color: '#00ffff', id: 8 },
+        { Icon: Mic, color: '#ffff00', id: 9 },
+        { Icon: Mail, color: '#00ff00', id: 10 },
+        { Icon: Pen, color: '#ff00ff', id: 11 },
+        { Icon: MessageCircle, color: '#ff0080', id: 12 },
+      ];
 
-    const positioned = icons.map((icon, idx) => ({
-      ...icon,
-      top: Math.random() * 80 + 10,
-      left: Math.random() * 90 + 5,
-      delay: idx * 0.5,
-      duration: 15 + Math.random() * 10,
-    }));
+      const positioned = icons.map((icon, idx) => ({
+        ...icon,
+        top: Math.random() * 80 + 10,
+        left: Math.random() * 90 + 5,
+        delay: idx * 0.5,
+        duration: 15 + Math.random() * 10,
+      }));
 
-    setFloatingIcons(positioned);
-  }, []);
+      setFloatingIcons(positioned);
+    }, []);
 
   // Navigation handler
   const navigateTo = (page) => {
     setCurrentPage(page);
+    // update browser history so anchors and back/forward work
+    const path = page === 'landing' ? '/' : `/${page}`;
+    if (window.location.pathname !== path) {
+      window.history.pushState({ page }, '', path);
+    }
   };
+
+  // respond to browser navigation and initial path
+  useEffect(() => {
+    const mapPathToPage = (path) => {
+      if (!path || path === '/' || path === '') return 'landing';
+      const p = path.replace(/^\//, '').split('/')[0];
+      if (['scraper', 'dashboard', 'explorer', 'profile', 'about'].includes(p)) return p;
+      return 'landing';
+    };
+
+    const setFromPath = () => setCurrentPage(mapPathToPage(window.location.pathname));
+
+    // set initial page from URL
+    setFromPath();
+
+    const onPop = () => setFromPath();
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   // Render different pages based on currentPage state
   const renderPage = () => {
