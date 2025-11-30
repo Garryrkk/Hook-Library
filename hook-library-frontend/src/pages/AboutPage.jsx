@@ -1,14 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Heart, Copy, Folder, Flame, TrendingUp, Calendar, Clock,
-  Settings, Bell, Shield, Download, Camera, Mail, Check,
-  Youtube, Instagram, Search, X, ChevronDown, Eye, EyeOff,
-  Award, Star, BarChart3, PieChart, Activity, Menu,
-  LogOut, Key, Trash2, Edit2, Save, RefreshCw, ExternalLink,
-  FileText, Share2, Lock, Crown, AlertCircle, Loader
-} from 'lucide-react';
+import React from 'react';
+import { Heart, Code, Coffee, Zap, Bell, User } from 'lucide-react';
 
+<<<<<<< HEAD
 // ============================================
 // API SERVICE
 // ============================================
@@ -371,711 +364,450 @@ const QuickStats = ({ stats, isLoading }) => {
     { icon: Copy, label: 'Hooks Copied', value: stats?.copied || 0, color: 'from-purple-500 to-blue-500', emoji: '📋' },
     { icon: Folder, label: 'Collections', value: stats?.collections || 0, color: 'from-blue-500 to-cyan-500', emoji: '📁' },
     { icon: Flame, label: 'Day Streak', value: stats?.streak || 0, color: 'from-orange-500 to-red-500', emoji: '🔥' }
+=======
+const AboutPage = () => {
+  const stats = [
+    { 
+      label: '10K+ Lines of Code', 
+      icon: Code, 
+      color: '#ff0080',
+      gradient: 'linear-gradient(135deg, #ff0080, #ff00ff)'
+    },
+    { 
+      label: '∞ Cups of Coffee', 
+      icon: Coffee, 
+      color: '#00ffff',
+      gradient: 'linear-gradient(135deg, #00ffff, #0080ff)'
+    },
+    { 
+      label: '100% Passion & Dedication', 
+      icon: Zap, 
+      color: '#ffff00',
+      gradient: 'linear-gradient(135deg, #ffff00, #ff8800)'
+    },
+    { 
+      label: '2 Sisters Building Dreams', 
+      icon: Heart, 
+      color: '#ff00ff',
+      gradient: 'linear-gradient(135deg, #ff00ff, #8000ff)'
+    },
+>>>>>>> dca22dca4006ca18a41ca989da017959cd8a2fe2
   ];
 
-  if (isLoading) {
-    return (
-      <section className="mb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="bg-[#1a0a2e]/40 border border-purple-500/30 rounded-xl p-6 h-40 animate-pulse" />
-          ))}
-        </div>
-      </section>
-    );
-  }
-
   return (
-    <section className="mb-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-            whileHover={{ scale: 1.05, y: -5 }}
-            className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6 group cursor-pointer"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className={`p-3 bg-gradient-to-br ${stat.color} rounded-lg`}>
-                <stat.icon size={24} className="text-white" />
-              </div>
-              <span className="text-3xl">{stat.emoji}</span>
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #000000 0%, #1a0033 30%, #2d0066 60%, #4a0099 100%)',
+      fontFamily: "'Orbitron', monospace",
+      width: '100%',
+      overflow: 'auto'
+    }}>
+      {/* Navigation Bar */}
+      <nav style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        background: 'rgba(0, 0, 0, 0.9)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '2px solid #cc0066',
+        padding: '15px 40px',
+        width: '100%'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          maxWidth: '1920px',
+          margin: '0 auto'
+        }}>
+          <a href="/" style={{
+            fontSize: '28px',
+            fontWeight: 900,
+            background: 'linear-gradient(90deg, #cc0066 0%, #ff00ff 50%, #8000ff 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            textDecoration: 'none'
+          }}>
+            HOOK BANK
+          </a>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
+            <div style={{ display: 'flex', gap: '30px' }}>
+              <a href="/" style={{ color: '#bb86fc', textDecoration: 'none', fontSize: '15px' }}>Home</a>
+              <a href="/dashboard" style={{ color: '#bb86fc', textDecoration: 'none', fontSize: '15px' }}>Dashboard</a>
+              <a href="/explorer" style={{ color: '#bb86fc', textDecoration: 'none', fontSize: '15px' }}>Explorer</a>
+              <a href="/about" style={{
+                color: '#ff00ff',
+                textDecoration: 'none',
+                fontSize: '15px',
+                fontWeight: 'bold',
+                borderBottom: '2px solid #ff00ff',
+                paddingBottom: '5px'
+              }}>About</a>
             </div>
-            
-            <p className="text-4xl font-bold text-white mb-2">
-              {stat.value.toLocaleString()}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div style={{ position: 'relative' }}>
+                <Bell size={22} color="#bb86fc" style={{ cursor: 'pointer' }} />
+                <span style={{
+                  position: 'absolute',
+                  top: '-5px',
+                  right: '-5px',
+                  background: '#cc0066',
+                  color: '#fff',
+                  borderRadius: '50%',
+                  width: '18px',
+                  height: '18px',
+                  fontSize: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold'
+                }}>3</span>
+              </div>
+              <div style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #cc0066, #8000ff)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: '#fff',
+                fontSize: '16px',
+                fontWeight: 'bold'
+              }}>U</div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <div style={{
+        maxWidth: '1920px',
+        margin: '0 auto',
+        padding: '120px 80px',
+        textAlign: 'center',
+        animation: 'fadeIn 1s ease-out'
+      }}>
+        <div style={{
+          display: 'inline-block',
+          background: 'rgba(204, 0, 102, 0.2)',
+          border: '2px solid #cc0066',
+          borderRadius: '50px',
+          padding: '12px 30px',
+          marginBottom: '40px',
+          animation: 'fadeIn 1s ease-out 0.2s both'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <Heart size={24} color="#ff00ff" fill="#ff00ff" />
+            <span style={{
+              color: '#ff00ff',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              letterSpacing: '1px'
+            }}>
+              BUILT WITH PASSION
+            </span>
+            <Heart size={24} color="#ff00ff" fill="#ff00ff" />
+          </div>
+        </div>
+
+        <h1 style={{
+          fontSize: '72px',
+          fontWeight: 900,
+          background: 'linear-gradient(90deg, #ff0080 0%, #ff00ff 30%, #8000ff 60%, #ff0080 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          margin: '0 0 30px 0',
+          letterSpacing: '2px',
+          animation: 'fadeIn 1s ease-out 0.4s both'
+        }}>
+          Meet the Creators
+        </h1>
+
+        <p style={{
+          fontSize: '32px',
+          color: '#bb86fc',
+          marginBottom: '50px',
+          letterSpacing: '1px',
+          animation: 'fadeIn 1s ease-out 0.6s both'
+        }}>
+          Built with passion by two sisters
+        </p>
+
+        {/* Creators Cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '40px',
+          maxWidth: '1000px',
+          margin: '0 auto 80px',
+          animation: 'fadeIn 1s ease-out 0.8s both'
+        }}>
+          {/* Garima Kalra Card */}
+          <div style={{
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(20px)',
+            border: '2px solid rgba(204, 0, 102, 0.3)',
+            borderRadius: '30px',
+            padding: '50px 40px',
+            transition: 'all 0.3s',
+            cursor: 'pointer'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-10px)';
+            e.currentTarget.style.boxShadow = '0 20px 60px rgba(255, 0, 128, 0.5)';
+            e.currentTarget.style.borderColor = '#ff0080';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
+            e.currentTarget.style.borderColor = 'rgba(204, 0, 102, 0.3)';
+          }}>
+            <div style={{
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #ff0080, #ff00ff)',
+              padding: '5px',
+              margin: '0 auto 30px',
+              boxShadow: '0 0 40px rgba(255, 0, 128, 0.6)'
+            }}>
+              <div style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                background: '#000',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '48px',
+                fontWeight: 'bold',
+                color: '#ff00ff'
+              }}>
+                G
+              </div>
+            </div>
+            <h3 style={{
+              fontSize: '32px',
+              fontWeight: 900,
+              background: 'linear-gradient(90deg, #ff0080, #ff00ff)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '15px'
+            }}>
+              Garima Kalra
+            </h3>
+            <p style={{
+              color: '#bb86fc',
+              fontSize: '18px',
+              lineHeight: '1.6'
+            }}>
+              Full-Stack Developer & Creator
             </p>
-            <p className="text-sm text-gray-400">{stat.label}</p>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-};
-
-// ============================================
-// SIDEBAR TABS
-// ============================================
-const SidebarTabs = ({ activeTab, onTabChange }) => {
-  const tabs = [
-    { id: 'overview', label: 'Overview', icon: Activity },
-    { id: 'saved', label: 'Saved Hooks', icon: Heart },
-    { id: 'collections', label: 'Collections', icon: Folder },
-    { id: 'history', label: 'Scraping History', icon: Clock },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'achievements', label: 'Achievements', icon: Award }
-  ];
-
-  return (
-    <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-4">
-      <div className="space-y-2">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => onTabChange(tab.id)}
-            className={`w-full px-4 py-3 rounded-lg text-left text-sm font-semibold transition-all flex items-center space-x-3 ${
-              activeTab === tab.id
-                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
-                : 'text-gray-400 hover:bg-purple-500/10 hover:text-white'
-            }`}
-          >
-            <tab.icon size={20} />
-            <span>{tab.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// ============================================
-// OVERVIEW TAB
-// ============================================
-const OverviewTab = ({ activity }) => {
-  return (
-    <div className="space-y-6">
-      <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
-        <h3 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-          <TrendingUp size={24} className="text-pink-400" />
-          <span>Weekly Activity</span>
-        </h3>
-        <div className="h-64 flex items-end justify-around gap-2">
-          {activity?.weekly?.map((day, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-2">
-              <motion.div
-                initial={{ height: 0 }}
-                animate={{ height: `${(day.value / 50) * 100}%` }}
-                transition={{ delay: i * 0.1 }}
-                className="w-full bg-gradient-to-t from-pink-500 to-purple-500 rounded-t-lg min-h-[20px]"
-              />
-              <span className="text-xs text-gray-400">{day.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-3">
-            <Youtube size={32} className="text-red-500" />
-            <span className="text-2xl font-bold text-white">42%</span>
           </div>
-          <p className="text-gray-400 text-sm">YouTube Hooks</p>
-        </div>
 
-        <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">R</div>
-            <span className="text-2xl font-bold text-white">35%</span>
-          </div>
-          <p className="text-gray-400 text-sm">Reddit Hooks</p>
-        </div>
-
-        <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-3">
-            <Instagram size={32} className="text-pink-500" />
-            <span className="text-2xl font-bold text-white">23%</span>
-          </div>
-          <p className="text-gray-400 text-sm">Instagram Hooks</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ============================================
-// SAVED HOOKS TAB
-// ============================================
-const SavedHooksTab = ({ hooks, onRefresh }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterPlatform, setFilterPlatform] = useState('all');
-
-  const filteredHooks = hooks?.filter(hook => {
-    const matchesSearch = hook.text?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesPlatform = filterPlatform === 'all' || hook.platform?.toLowerCase() === filterPlatform;
-    return matchesSearch && matchesPlatform;
-  }) || [];
-
-  const handleCopyHook = async (hookId, text) => {
-    try {
-      const api = new ApiService();
-      await api.copyHook(hookId);
-      navigator.clipboard.writeText(text);
-      alert('Hook copied to clipboard!');
-    } catch (error) {
-      console.error('Copy failed:', error);
-    }
-  };
-
-  const handleDeleteHook = async (hookId) => {
-    if (window.confirm('Delete this hook?')) {
-      try {
-        const api = new ApiService();
-        await api.deleteHook(hookId);
-        onRefresh();
-      } catch (error) {
-        console.error('Delete failed:', error);
-      }
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search saved hooks..."
-              className="w-full px-4 py-3 pl-10 bg-[#0a0a0f]/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none"
-            />
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
-          
-          <select
-            value={filterPlatform}
-            onChange={(e) => setFilterPlatform(e.target.value)}
-            className="px-4 py-3 bg-[#0a0a0f]/50 border border-purple-500/30 rounded-lg text-white"
-          >
-            <option value="all">All Platforms</option>
-            <option value="youtube">YouTube</option>
-            <option value="reddit">Reddit</option>
-            <option value="instagram">Instagram</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredHooks.map((hook) => (
-          <motion.div
-            key={hook.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -5 }}
-            className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-5"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs font-semibold">
-                {hook.platform}
-              </span>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleCopyHook(hook.id, hook.text)}
-                  className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors"
-                >
-                  <Copy size={14} className="text-gray-400" />
-                </button>
-                <button
-                  onClick={() => handleDeleteHook(hook.id)}
-                  className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors"
-                >
-                  <Trash2 size={14} className="text-gray-400 hover:text-red-400" />
-                </button>
+          {/* Aurin Desai Card */}
+          <div style={{
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(20px)',
+            border: '2px solid rgba(204, 0, 102, 0.3)',
+            borderRadius: '30px',
+            padding: '50px 40px',
+            transition: 'all 0.3s',
+            cursor: 'pointer'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-10px)';
+            e.currentTarget.style.boxShadow = '0 20px 60px rgba(128, 0, 255, 0.5)';
+            e.currentTarget.style.borderColor = '#8000ff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
+            e.currentTarget.style.borderColor = 'rgba(204, 0, 102, 0.3)';
+          }}>
+            <div style={{
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #8000ff, #ff00ff)',
+              padding: '5px',
+              margin: '0 auto 30px',
+              boxShadow: '0 0 40px rgba(128, 0, 255, 0.6)'
+            }}>
+              <div style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                background: '#000',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '48px',
+                fontWeight: 'bold',
+                color: '#8000ff'
+              }}>
+                A
               </div>
             </div>
-            
-            <p className="text-white text-sm mb-3">"{hook.text}"</p>
-            
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>Saved {hook.savedDate}</span>
-              <Heart size={12} className="text-pink-400 fill-pink-400" />
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {filteredHooks.length === 0 && (
-        <div className="text-center py-20">
-          <Heart size={48} className="text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-400">No saved hooks found</p>
+            <h3 style={{
+              fontSize: '32px',
+              fontWeight: 900,
+              background: 'linear-gradient(90deg, #8000ff, #ff00ff)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '15px'
+            }}>
+              Aurin Desai
+            </h3>
+            <p style={{
+              color: '#bb86fc',
+              fontSize: '18px',
+              lineHeight: '1.6'
+            }}>
+              Full-Stack Developer & Creator
+            </p>
+          </div>
         </div>
-      )}
-    </div>
-  );
-};
 
-// ============================================
-// COLLECTIONS TAB
-// ============================================
-const CollectionsTab = ({ collections, onRefresh }) => {
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newCollectionName, setNewCollectionName] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
-
-  const handleCreate = async () => {
-    if (newCollectionName.trim()) {
-      try {
-        setIsCreating(true);
-        const api = new ApiService();
-        await api.createCollection(newCollectionName);
-        onRefresh();
-        setNewCollectionName('');
-        setShowCreateModal(false);
-      } catch (error) {
-        alert('Failed to create collection');
-      } finally {
-        setIsCreating(false);
-      }
-    }
-  };
-
-  const handleDeleteCollection = async (collectionId) => {
-    if (window.confirm('Delete this collection?')) {
-      try {
-        const api = new ApiService();
-        await api.deleteCollection(collectionId);
-        onRefresh();
-      } catch (error) {
-        console.error('Delete failed:', error);
-      }
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-2xl font-bold text-white">My Collections</h3>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg font-semibold flex items-center space-x-2"
-        >
-          <Folder size={16} />
-          <span>New Collection</span>
-        </motion.button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {collections?.map((collection) => (
-          <motion.div
-            key={collection.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ y: -5 }}
-            className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6 group"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-pink-500 to-purple-500 rounded-lg">
-                <Folder size={24} className="text-white" />
+        {/* Stats Section */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '30px',
+          maxWidth: '1400px',
+          margin: '0 auto',
+          animation: 'fadeIn 1s ease-out 1s both'
+        }}>
+          {stats.map((stat, idx) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={idx}
+                style={{
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  backdropFilter: 'blur(20px)',
+                  border: `2px solid ${stat.color}40`,
+                  borderRadius: '25px',
+                  padding: '40px 30px',
+                  transition: 'all 0.3s',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-10px) scale(1.02)';
+                  e.currentTarget.style.boxShadow = `0 20px 50px ${stat.color}60`;
+                  e.currentTarget.style.borderColor = stat.color;
+                  e.currentTarget.style.background = `${stat.gradient}15`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.borderColor = `${stat.color}40`;
+                  e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)';
+                }}
+              >
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  background: stat.gradient,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 25px',
+                  boxShadow: `0 0 30px ${stat.color}80`
+                }}>
+                  <Icon size={40} color="#fff" strokeWidth={2.5} />
+                </div>
+                <h3 style={{
+                  color: '#fff',
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  marginBottom: '10px',
+                  letterSpacing: '0.5px'
+                }}>
+                  {stat.label}
+                </h3>
               </div>
-              <button
-                onClick={() => handleDeleteCollection(collection.id)}
-                className="p-2 hover:bg-red-500/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-              >
-                <Trash2 size={16} className="text-gray-400" />
-              </button>
-            </div>
-            
-            <h4 className="text-lg font-bold text-white mb-2">{collection.name}</h4>
-            <p className="text-sm text-gray-400 mb-4">{collection.count || 0} hooks</p>
-            
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>Updated {collection.updated}</span>
-              <ExternalLink size={12} />
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      <AnimatePresence>
-        {showCreateModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowCreateModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-[#1a0a2e] border-2 border-purple-500/50 rounded-2xl p-8 max-w-md w-full"
-            >
-              <h3 className="text-2xl font-bold text-white mb-6">Create New Collection</h3>
-              
-              <input
-                type="text"
-                value={newCollectionName}
-                onChange={(e) => setNewCollectionName(e.target.value)}
-                placeholder="Collection name..."
-                className="w-full px-4 py-3 bg-[#0a0a0f]/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none mb-6"
-                autoFocus
-              />
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={handleCreate}
-                  disabled={isCreating}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg font-semibold disabled:opacity-50"
-                >
-                  {isCreating ? 'Creating...' : 'Create'}
-                </button>
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-6 py-3 border border-purple-500/50 text-white rounded-lg hover:bg-purple-500/10"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-// ============================================
-// SCRAPING HISTORY TAB
-// ============================================
-const ScrapingHistoryTab = ({ history }) => {
-  return (
-    <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-8 text-center">
-      <Clock size={64} className="text-gray-600 mx-auto mb-4" />
-      <h3 className="text-2xl font-bold text-white mb-2">Scraping History</h3>
-      <p className="text-gray-400">{history?.length || 0} scraping records</p>
-    </div>
-  );
-};
-
-// ============================================
-// ANALYTICS TAB
-// ============================================
-const AnalyticsTab = () => {
-  const [reportType, setReportType] = useState('weekly');
-  const [isDownloading, setIsDownloading] = useState(false);
-
-  const handleDownloadReport = async () => {
-    try {
-      setIsDownloading(true);
-      const api = new ApiService();
-      const data = reportType === 'weekly' ? await api.getWeeklyReport() : await api.getWeeklyReport();
-      
-      const jsonString = JSON.stringify(data, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${reportType}_report.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      alert('Failed to download report');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
-        <h3 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
-          <BarChart3 size={24} className="text-pink-400" />
-          <span>Analytics Dashboard</span>
-        </h3>
-
-        <div className="flex gap-4 mb-6">
-          <button
-            onClick={() => setReportType('weekly')}
-            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-              reportType === 'weekly'
-                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
-                : 'bg-[#0a0a0f]/50 text-gray-400'
-            }`}
-          >
-            Weekly Report
-          </button>
-          <button
-            onClick={() => setReportType('monthly')}
-            className={`px-6 py-2 rounded-lg font-semibold transition-all ${
-              reportType === 'monthly'
-                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
-                : 'bg-[#0a0a0f]/50 text-gray-400'
-            }`}
-          >
-            Monthly Report
-          </button>
+            );
+          })}
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleDownloadReport}
-          disabled={isDownloading}
-          className="px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg font-semibold flex items-center gap-2 disabled:opacity-50"
-        >
-          <Download size={18} />
-          <span>{isDownloading ? 'Downloading...' : 'Download Report'}</span>
-        </motion.button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
-          <h4 className="text-lg font-bold text-white mb-4">Performance</h4>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center p-3 bg-[#0a0a0f]/30 rounded-lg">
-              <span className="text-gray-400">Total Hooks</span>
-              <span className="text-white font-bold">247</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-[#0a0a0f]/30 rounded-lg">
-              <span className="text-gray-400">Avg. Daily</span>
-              <span className="text-white font-bold">35</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
-          <h4 className="text-lg font-bold text-white mb-4">Platform Distribution</h4>
-          <div className="space-y-2">
-            <div className="text-sm text-gray-400">YouTube: 42%</div>
-            <div className="text-sm text-gray-400">Reddit: 35%</div>
-            <div className="text-sm text-gray-400">Instagram: 23%</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ============================================
-// ACHIEVEMENTS TAB
-// ============================================
-const AchievementsTab = ({ achievements }) => {
-  return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 border-2 border-purple-500/30 rounded-2xl p-8 text-center">
-        <Crown size={64} className="text-yellow-400 mx-auto mb-4" />
-        <h3 className="text-3xl font-bold text-white mb-2">Level 5 - Hook Master</h3>
-        <p className="text-gray-400 mb-4">1,250 XP until next level</p>
-        <div className="w-full bg-[#0a0a0f]/50 rounded-full h-4">
-          <div className="bg-gradient-to-r from-pink-500 to-purple-500 h-4 rounded-full" style={{ width: '75%' }} />
+        {/* Mission Statement */}
+        <div style={{
+          marginTop: '100px',
+          maxWidth: '900px',
+          margin: '100px auto 0',
+          padding: '50px',
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(20px)',
+          border: '2px solid rgba(204, 0, 102, 0.3)',
+          borderRadius: '30px',
+          animation: 'fadeIn 1s ease-out 1.2s both'
+        }}>
+          <h2 style={{
+            fontSize: '42px',
+            fontWeight: 900,
+            background: 'linear-gradient(90deg, #ff0080, #ff00ff, #8000ff)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '30px'
+          }}>
+            Our Mission
+          </h2>
+          <p style={{
+            color: '#bb86fc',
+            fontSize: '20px',
+            lineHeight: '1.8',
+            letterSpacing: '0.5px'
+          }}>
+            We're on a mission to revolutionize content creation by making viral hook generation accessible to everyone. 
+            Hook Bank combines cutting-edge AI technology with a deep understanding of what makes content engaging. 
+            Our platform empowers creators, marketers, and businesses to never run out of ideas again.
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {achievements?.map((achievement) => (
-          <motion.div
-            key={achievement.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.05 }}
-            className={`bg-[#1a0a2e]/40 backdrop-blur-sm border rounded-xl p-6 text-center ${
-              achievement.unlocked 
-                ? 'border-yellow-500/50' 
-                : 'border-purple-500/30 opacity-60'
-            }`}
-          >
-            <div className={`text-6xl mb-4 ${achievement.unlocked ? '' : 'grayscale'}`}>
-              {achievement.icon}
-            </div>
-            <h4 className="text-lg font-bold text-white mb-2">{achievement.name}</h4>
-            <p className="text-sm text-gray-400 mb-3">{achievement.description}</p>
-            {achievement.unlocked ? (
-              <span className="text-xs text-green-400 flex items-center justify-center space-x-1">
-                <Check size={12} />
-                <span>Unlocked {achievement.unlockedDate}</span>
-              </span>
-            ) : (
-              <span className="text-xs text-gray-500">
-                {achievement.progress}/{achievement.requirement}
-              </span>
-            )}
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// ============================================
-// SETTINGS TAB
-// ============================================
-const SettingsTab = () => {
-  const [activeSection, setActiveSection] = useState('account');
-  const [isLoading, setIsLoading] = useState(false);
-  const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
-
-  const handlePasswordChange = async () => {
-    if (!passwords.new || !passwords.confirm || !passwords.current) {
-      alert('Please fill all password fields');
-      return;
-    }
-    if (passwords.new !== passwords.confirm) {
-      alert('New passwords do not match');
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const api = new ApiService();
-      await api.changePassword(passwords.current, passwords.new, passwords.confirm);
-      alert('Password changed successfully!');
-      setPasswords({ current: '', new: '', confirm: '' });
-    } catch (error) {
-      alert('Failed to change password');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleEnable2FA = async () => {
-    try {
-      const api = new ApiService();
-      await api.enableTwoFactor();
-      alert('2FA setup initiated. Check your email for QR code.');
-    } catch (error) {
-      alert('Failed to enable 2FA');
-    }
-  };
-
-  const handleExport = async (format) => {
-    try {
-      setIsLoading(true);
-      const api = new ApiService();
-      await api.exportData(format);
-      alert(`Data exported as ${format.toUpperCase()}`);
-    } catch (error) {
-      alert('Failed to export data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    const password = prompt('Enter your password to confirm account deletion:');
-    if (!password) return;
-
-    if (!window.confirm('Are you absolutely sure? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      const api = new ApiService();
-      await api.deleteAccount(password);
-      alert('Account deleted successfully');
-      window.location.href = '/';
-    } catch (error) {
-      alert('Failed to delete account');
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
-        {['account', 'notifications', 'privacy', 'data'].map((section) => (
-          <button
-            key={section}
-            onClick={() => setActiveSection(section)}
-            className={`px-4 py-2 rounded-lg font-semibold capitalize transition-all ${
-              activeSection === section
-                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
-                : 'bg-[#1a0a2e]/40 text-gray-400'
-            }`}
-          >
-            {section}
-          </button>
-        ))}
-      </div>
-
-      {activeSection === 'account' && (
-        <div className="space-y-4">
-          <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
-            <h4 className="text-lg font-bold text-white mb-4 flex items-center space-x-2">
-              <Key size={20} className="text-pink-400" />
-              <span>Change Password</span>
-            </h4>
-            <div className="space-y-4">
-              <input
-                type="password"
-                placeholder="Current password"
-                value={passwords.current}
-                onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
-                className="w-full px-4 py-3 bg-[#0a0a0f]/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500"
-              />
-              <input
-                type="password"
-                placeholder="New password"
-                value={passwords.new}
-                onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
-                className="w-full px-4 py-3 bg-[#0a0a0f]/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500"
-              />
-              <input
-                type="password"
-                placeholder="Confirm new password"
-                value={passwords.confirm}
-                onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
-                className="w-full px-4 py-3 bg-[#0a0a0f]/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500"
-              />
-              <button
-                onClick={handlePasswordChange}
-                disabled={isLoading}
-                className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg font-semibold disabled:opacity-50"
-              >
-                {isLoading ? 'Updating...' : 'Update Password'}
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
-            <h4 className="text-lg font-bold text-white mb-4 flex items-center space-x-2">
-              <Shield size={20} className="text-green-400" />
-              <span>Two-Factor Authentication</span>
-            </h4>
-            <div className="flex items-center justify-between">
-              <p className="text-gray-400 text-sm">Add an extra layer of security</p>
-              <button
-                onClick={handleEnable2FA}
-                className="px-6 py-2 bg-green-500/20 text-green-400 border border-green-500/50 rounded-lg font-semibold"
-              >
-                Enable
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6">
-            <h4 className="text-lg font-bold text-red-400 mb-4 flex items-center space-x-2">
-              <AlertCircle size={20} />
-              <span>Danger Zone</span>
-            </h4>
-            <p className="text-gray-400 text-sm mb-4">Once you delete your account, there is no going back.</p>
-            <button
-              onClick={handleDeleteAccount}
-              className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold"
-            >
-              Delete Account
-            </button>
-          </div>
+      {/* Footer */}
+      <footer style={{
+        background: 'rgba(0, 0, 0, 0.9)',
+        borderTop: '2px solid #cc0066',
+        padding: '30px',
+        marginTop: '80px',
+        width: '100%'
+      }}>
+        <div style={{
+          maxWidth: '1920px',
+          margin: '0 auto',
+          textAlign: 'center'
+        }}>
+          <p style={{
+            color: '#bb86fc',
+            fontSize: '16px',
+            marginBottom: '10px'
+          }}>
+            © Hook Bank 2025
+          </p>
+          <p style={{
+            color: '#ff00ff',
+            fontSize: '14px'
+          }}>
+            Built with ❤️ by <span style={{ fontWeight: 'bold' }}>Garima Kalra & Aurin Desai</span>
+          </p>
         </div>
-      )}
+      </footer>
 
+<<<<<<< HEAD
       {activeSection === 'notifications' && (
         <div className="bg-[#1a0a2e]/40 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
           <h4 className="text-lg font-bold text-white mb-6 flex items-center space-x-2">
@@ -1275,20 +1007,51 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
+=======
+>>>>>>> dca22dca4006ca18a41ca989da017959cd8a2fe2
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #000000; }
-        .hero-gradient-text {
-          background: linear-gradient(90deg, #ff4b8b, #8b5cf6);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
         }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #1a0a2e; }
-        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff4b8b, #8b5cf6); border-radius: 4px; }
+
+        body {
+          overflow-x: hidden;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        ::-webkit-scrollbar {
+          width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.5);
+          border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #cc0066, #8000ff);
+          border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #ff0080, #cc0066);
+        }
       `}</style>
+<<<<<<< HEAD
 
       <Navbar onLogout={handleLogout} showNotifications={showNotifications} setShowNotifications={setShowNotifications} notifications={notifications} />
 
@@ -1348,6 +1111,10 @@ export default function ProfilePage() {
           <span style={{ color: '#fff', fontSize: '14px' }}>{showToast.message}</span>
         </div>
       )}
+=======
+>>>>>>> dca22dca4006ca18a41ca989da017959cd8a2fe2
     </div>
   );
-}
+};
+
+export default AboutPage;

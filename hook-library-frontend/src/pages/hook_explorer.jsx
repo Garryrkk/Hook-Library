@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, User, Menu, X, Filter, Youtube, MessageCircle, Instagram, Heart, Copy, ExternalLink, TrendingUp, RefreshCw, ChevronUp, Check, AlertCircle, BarChart3, Clock, Github } from 'lucide-react';
+import { Search, Bell, User, Menu, X, Filter, Youtube, MessageCircle, Instagram, Heart, Copy, ExternalLink, TrendingUp, RefreshCw, ChevronUp, Check, AlertCircle, BarChart3, Clock, Github, Share2, Facebook, Linkedin, Twitter, Mail } from 'lucide-react';
 
 const HookExplorer = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,6 +14,7 @@ const HookExplorer = () => {
   const [showToast, setShowToast] = useState(null);
   const [visibleHooks, setVisibleHooks] = useState(9);
   const [showBackToTop, setShowBackToTop] = useState(false);
+<<<<<<< HEAD
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([
     { id: 1, message: 'New hook trending in Business niche', time: '5m ago' },
@@ -21,6 +22,9 @@ const HookExplorer = () => {
   ]);
 
   const API_BASE = "http://localhost:8000/api";
+=======
+  const [shareMenuOpen, setShareMenuOpen] = useState(null);
+>>>>>>> dca22dca4006ca18a41ca989da017959cd8a2fe2
 
   const allHooks = [
     { id: 1, platform: 'youtube', text: '5 mistakes killing your productivity and how to fix them', niche: 'Business', tone: 'Curiosity', likes: 12400, comments: 890, views: 45000, date: '2024-11-20', copied: 234 },
@@ -44,6 +48,42 @@ const HookExplorer = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    loadSavedHooks();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (shareMenuOpen && !e.target.closest('[data-share-menu]')) {
+        setShareMenuOpen(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [shareMenuOpen]);
+
+  const loadSavedHooks = async () => {
+    try {
+      const result = await window.storage.get('saved-hooks');
+      if (result && result.value) {
+        const savedIds = JSON.parse(result.value);
+        setSavedHooks(new Set(savedIds));
+      }
+    } catch (error) {
+      console.log('No saved hooks found');
+    }
+  };
+
+  const saveSavedHooks = async (savedSet) => {
+    try {
+      const savedArray = Array.from(savedSet);
+      await window.storage.set('saved-hooks', JSON.stringify(savedArray));
+    } catch (error) {
+      console.error('Error saving hooks:', error);
+      showToastNotification('Error saving hook', 'error');
+    }
+  };
 
   const filteredHooks = allHooks.filter(hook => {
     const matchesSearch = hook.text.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -72,7 +112,7 @@ const HookExplorer = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const toggleSave = (id) => {
+  const toggleSave = async (id) => {
     const newSaved = new Set(savedHooks);
     if (newSaved.has(id)) {
       newSaved.delete(id);
@@ -82,6 +122,55 @@ const HookExplorer = () => {
       showToastNotification('Saved successfully!', 'success');
     }
     setSavedHooks(newSaved);
+    await saveSavedHooks(newSaved);
+  };
+
+  const shareHook = (hook, platform) => {
+    const text = encodeURIComponent(hook.text);
+    const url = encodeURIComponent(window.location.href);
+    
+    const shareUrls = {
+      whatsapp: `https://wa.me/?text=${text}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`,
+      twitter: `https://twitter.com/intent/tweet?text=${text}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`,
+      email: `mailto:?subject=Check out this hook&body=${text}`,
+      copy: null
+    };
+
+    if (platform === 'copy') {
+      navigator.clipboard.writeText(hook.text);
+      showToastNotification('Link copied to clipboard!', 'success');
+      setShareMenuOpen(null);
+      return;
+    }
+
+    if (shareUrls[platform]) {
+      window.open(shareUrls[platform], '_blank', 'width=600,height=400');
+      setShareMenuOpen(null);
+      showToastNotification(`Sharing to ${platform}...`, 'success');
+    }
+  };
+
+  const showToastNotification = (message, type) => {
+    setShowToast({ message, type });
+    setTimeout(() => setShowToast(null), 3000);
+  };
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setSelectedPlatform('All');
+    setSelectedNiche('All');
+    setSelectedTone('All');
+    setSortBy('newest');
+    showToastNotification('Filters reset', 'info');
+  };
+
+  const viewHook = (hook) => {
+    setRecentlyViewed(prev => {
+      const updated = [hook, ...prev.filter(h => h.id !== hook.id)].slice(0, 5);
+      return updated;
+    });
   };
 
   const getPlatformIcon = (platform) => {
@@ -526,7 +615,7 @@ const HookExplorer = () => {
                 gap: '25px',
                 marginBottom: '40px'
               }}>
-                {displayedHooks.map((hook, idx) => (
+                {displayedHooks.map((hook) => (
                   <div
                     key={hook.id}
                     style={{
@@ -614,18 +703,6 @@ const HookExplorer = () => {
                     }}>
                       <div style={{ textAlign: 'center' }}>
                         <div style={{ color: '#ff00ff', fontSize: '16px', fontWeight: 'bold' }}>
-                          {(hook.likes / 1000).toFixed(1)}K
-                        </div>
-                        <div style={{ color: '#bb86fc', fontSize: '10px' }}>Likes</div>
-                      </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ color: '#ff00ff', fontSize: '16px', fontWeight: 'bold' }}>
-                          {hook.comments}
-                        </div>
-                        <div style={{ color: '#bb86fc', fontSize: '10px' }}>Comments</div>
-                      </div>
-                      <div style={{ textAlign: 'center' }}>
-                        <div style={{ color: '#ff00ff', fontSize: '16px', fontWeight: 'bold' }}>
                           {(hook.views / 1000).toFixed(1)}K
                         </div>
                         <div style={{ color: '#bb86fc', fontSize: '10px' }}>Views</div>
@@ -693,31 +770,200 @@ const HookExplorer = () => {
                         }}
                       >
                         <Heart size={14} fill={savedHooks.has(hook.id) ? '#ff0080' : 'none'} />
-                        Save
+                        {savedHooks.has(hook.id) ? 'Saved' : 'Save'}
                       </button>
 
-                      <button
-                        onClick={() => viewHook(hook)}
-                        style={{
-                          flex: 1,
-                          background: 'rgba(204, 0, 102, 0.2)',
-                          border: '1px solid #cc0066',
-                          color: '#ff00ff',
-                          padding: '12px',
-                          borderRadius: '10px',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                          fontWeight: 'bold',
-                          fontFamily: "'Orbitron', monospace"
-                        }}
-                      >
-                        <ExternalLink size={14} />
-                        View
-                      </button>
+                      <div style={{ position: 'relative', flex: 1 }} data-share-menu>
+                        <button
+                          onClick={() => setShareMenuOpen(shareMenuOpen === hook.id ? null : hook.id)}
+                          style={{
+                            width: '100%',
+                            background: 'rgba(204, 0, 102, 0.2)',
+                            border: '1px solid #cc0066',
+                            color: '#ff00ff',
+                            padding: '12px',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            fontWeight: 'bold',
+                            fontFamily: "'Orbitron', monospace"
+                          }}
+                        >
+                          <Share2 size={14} />
+                          Share
+                        </button>
+
+                        {shareMenuOpen === hook.id && (
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '100%',
+                            right: 0,
+                            marginBottom: '10px',
+                            background: 'rgba(0, 0, 0, 0.95)',
+                            border: '2px solid #cc0066',
+                            borderRadius: '15px',
+                            padding: '15px',
+                            minWidth: '200px',
+                            boxShadow: '0 10px 40px rgba(204, 0, 102, 0.5)',
+                            zIndex: 1000,
+                            animation: 'fadeIn 0.2s'
+                          }}>
+                            <div style={{
+                              color: '#ff00ff',
+                              fontSize: '12px',
+                              fontWeight: 'bold',
+                              marginBottom: '12px',
+                              paddingBottom: '10px',
+                              borderBottom: '1px solid rgba(204, 0, 102, 0.3)'
+                            }}>
+                              Share via
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              <button
+                                onClick={() => shareHook(hook, 'whatsapp')}
+                                style={{
+                                  background: 'rgba(37, 211, 102, 0.1)',
+                                  border: '1px solid rgba(37, 211, 102, 0.3)',
+                                  color: '#25D366',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  fontFamily: "'Orbitron', monospace",
+                                  transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(37, 211, 102, 0.2)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(37, 211, 102, 0.1)'}
+                              >
+                                <MessageCircle size={16} />
+                                WhatsApp
+                              </button>
+
+                              <button
+                                onClick={() => shareHook(hook, 'linkedin')}
+                                style={{
+                                  background: 'rgba(0, 119, 181, 0.1)',
+                                  border: '1px solid rgba(0, 119, 181, 0.3)',
+                                  color: '#0077B5',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  fontFamily: "'Orbitron', monospace",
+                                  transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0, 119, 181, 0.2)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(0, 119, 181, 0.1)'}
+                              >
+                                <Linkedin size={16} />
+                                LinkedIn
+                              </button>
+
+                              <button
+                                onClick={() => shareHook(hook, 'facebook')}
+                                style={{
+                                  background: 'rgba(24, 119, 242, 0.1)',
+                                  border: '1px solid rgba(24, 119, 242, 0.3)',
+                                  color: '#1877F2',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  fontFamily: "'Orbitron', monospace",
+                                  transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(24, 119, 242, 0.2)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(24, 119, 242, 0.1)'}
+                              >
+                                <Facebook size={16} />
+                                Facebook
+                              </button>
+
+                              <button
+                                onClick={() => shareHook(hook, 'twitter')}
+                                style={{
+                                  background: 'rgba(29, 161, 242, 0.1)',
+                                  border: '1px solid rgba(29, 161, 242, 0.3)',
+                                  color: '#1DA1F2',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  fontFamily: "'Orbitron', monospace",
+                                  transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(29, 161, 242, 0.2)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(29, 161, 242, 0.1)'}
+                              >
+                                <Twitter size={16} />
+                                Twitter
+                              </button>
+
+                              <button
+                                onClick={() => shareHook(hook, 'email')}
+                                style={{
+                                  background: 'rgba(234, 67, 53, 0.1)',
+                                  border: '1px solid rgba(234, 67, 53, 0.3)',
+                                  color: '#EA4335',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  fontFamily: "'Orbitron', monospace",
+                                  transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(234, 67, 53, 0.2)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(234, 67, 53, 0.1)'}
+                              >
+                                <Mail size={16} />
+                                Email
+                              </button>
+
+                              <button
+                                onClick={() => shareHook(hook, 'copy')}
+                                style={{
+                                  background: 'rgba(204, 0, 102, 0.1)',
+                                  border: '1px solid rgba(204, 0, 102, 0.3)',
+                                  color: '#ff00ff',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  fontFamily: "'Orbitron', monospace",
+                                  transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(204, 0, 102, 0.2)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(204, 0, 102, 0.1)'}
+                              >
+                                <Copy size={16} />
+                                Copy Link
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -786,7 +1032,7 @@ const HookExplorer = () => {
               🔥 Top Hooks
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              {topHooks.map((hook, idx) => (
+              {topHooks.map((hook) => (
                 <div key={hook.id} style={{
                   background: 'rgba(204, 0, 102, 0.1)',
                   border: '1px solid rgba(204, 0, 102, 0.2)',
@@ -1178,17 +1424,6 @@ const HookExplorer = () => {
           }
         }
 
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
         ::-webkit-scrollbar {
           width: 10px;
         }
@@ -1199,7 +1434,7 @@ const HookExplorer = () => {
 
         ::-webkit-scrollbar-thumb {
           background: linear-gradient(180deg, #cc0066, #8000ff);
-          border-radius: 10px;
+          borderRadius: 10px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
@@ -1214,4 +1449,4 @@ const HookExplorer = () => {
   );
 };
 
-export default HookExplorer;
+export default HookExplorer;       
