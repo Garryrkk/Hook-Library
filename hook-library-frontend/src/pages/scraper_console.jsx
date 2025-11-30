@@ -699,8 +699,6 @@ const ScraperConsole = () => {
               border: '1px solid rgba(204, 0, 102, 0.3)',
               borderRadius: '20px',
               padding: '25px',
-              position: 'sticky',
-              top: '100px'
             }}>
               <h3 style={{
                 color: '#ff00ff',
