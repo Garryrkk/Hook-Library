@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, Youtube, MessageCircle, Instagram, Play, StopCircle, Trash2, Download, Settings, Activity, AlertCircle, CheckCircle, XCircle, Zap } from 'lucide-react';
+import { Search, Bell, Youtube, MessageCircle, Instagram, Play, StopCircle, Trash2, Download, Settings, Activity, AlertCircle, CheckCircle, Check, XCircle, Zap } from 'lucide-react';
 
 const ScraperConsole = () => {
   const [consoleLogs, setConsoleLogs] = useState([]);
@@ -8,13 +8,25 @@ const ScraperConsole = () => {
   const [isScrapingInstagram, setIsScrapingInstagram] = useState(false);
   const [isScrapingAll, setIsScrapingAll] = useState(false);
   const [autoScrape, setAutoScrape] = useState(false);
+  const [showToast, setShowToast] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, message: 'Scraper initialized successfully', time: '5m ago' },
+    { id: 2, message: 'Auto-scrape scheduled for tonight', time: '1h ago' }
+  ]);
   const [platformStatus, setPlatformStatus] = useState({
     youtube: { status: 'idle', lastScrape: null, hooksFound: 0 },
     reddit: { status: 'idle', lastScrape: null, hooksFound: 0 },
     instagram: { status: 'idle', lastScrape: null, hooksFound: 0 }
   });
+  const API_BASE = "http://localhost:8000/api";
+
   const consoleRef = useRef(null);
-  const API_BASE = "http://localhost:8000";
+
+  const showToastNotification = (message, type) => {
+    setShowToast({ message, type });
+    setTimeout(() => setShowToast(null), 3000);
+  };
 
   useEffect(() => {
     if (consoleRef.current) {
@@ -46,6 +58,7 @@ const ScraperConsole = () => {
   const scrapeYoutube = async () => {
     setIsScrapingYoutube(true);
     updatePlatformStatus('youtube', 'scraping');
+    showToastNotification('🎥 Starting YouTube scraper...', 'info');
     addLog('info', '🎥 Starting YouTube scraper...');
     addLog('info', '🔍 Connecting to YouTube API...');
     
@@ -63,6 +76,7 @@ const ScraperConsole = () => {
     
     await new Promise(resolve => setTimeout(resolve, 1000));
     addLog('success', '🎉 YouTube scraping completed successfully!');
+    showToastNotification('✅ YouTube scraping completed!', 'success');
     
     updatePlatformStatus('youtube', 'success', hooksFound);
     setIsScrapingYoutube(false);
@@ -71,6 +85,7 @@ const ScraperConsole = () => {
   const scrapeReddit = async () => {
     setIsScrapingReddit(true);
     updatePlatformStatus('reddit', 'scraping');
+    showToastNotification('🧵 Starting Reddit scraper...', 'info');
     addLog('info', '🧵 Starting Reddit scraper...');
     addLog('info', '🔍 Connecting to Reddit API...');
     
@@ -88,6 +103,7 @@ const ScraperConsole = () => {
     
     await new Promise(resolve => setTimeout(resolve, 1000));
     addLog('success', '🎉 Reddit scraping completed successfully!');
+    showToastNotification('✅ Reddit scraping completed!', 'success');
     
     updatePlatformStatus('reddit', 'success', hooksFound);
     setIsScrapingReddit(false);
@@ -96,6 +112,7 @@ const ScraperConsole = () => {
   const scrapeInstagram = async () => {
     setIsScrapingInstagram(true);
     updatePlatformStatus('instagram', 'scraping');
+    showToastNotification('📸 Starting Instagram scraper...', 'info');
     addLog('info', '📸 Starting Instagram scraper...');
     addLog('info', '🔍 Connecting to Instagram API...');
     
@@ -113,6 +130,7 @@ const ScraperConsole = () => {
     
     await new Promise(resolve => setTimeout(resolve, 1000));
     addLog('success', '🎉 Instagram scraping completed successfully!');
+    showToastNotification('✅ Instagram scraping completed!', 'success');
     
     updatePlatformStatus('instagram', 'success', hooksFound);
     setIsScrapingInstagram(false);
@@ -120,6 +138,7 @@ const ScraperConsole = () => {
 
   const scrapeAll = async () => {
     setIsScrapingAll(true);
+    showToastNotification('⚡ Starting full scrape...', 'info');
     addLog('warning', '⚡ Starting FULL SCRAPE across all platforms...');
     
     await scrapeYoutube();
@@ -130,11 +149,13 @@ const ScraperConsole = () => {
     
     const totalHooks = platformStatus.youtube.hooksFound + platformStatus.reddit.hooksFound + platformStatus.instagram.hooksFound;
     addLog('success', `🏆 FULL SCRAPE COMPLETED! Total: ${totalHooks} hooks collected`);
+    showToastNotification('🎉 Full scrape completed!', 'success');
     setIsScrapingAll(false);
   };
 
   const clearLogs = () => {
     setConsoleLogs([]);
+    showToastNotification('🧹 Console cleared', 'success');
     addLog('info', '🧹 Console cleared');
   };
 
@@ -146,6 +167,7 @@ const ScraperConsole = () => {
     a.href = url;
     a.download = `scraper-logs-${Date.now()}.txt`;
     a.click();
+    showToastNotification('📥 Logs exported successfully', 'success');
     addLog('success', '📥 Logs exported successfully');
   };
 
@@ -186,6 +208,27 @@ const ScraperConsole = () => {
       fontFamily: "'Orbitron', monospace",
       position: 'relative'
     }}>
+      {showToast && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: 'rgba(0, 0, 0, 0.95)',
+          border: `2px solid ${showToast.type === 'success' ? '#00ff00' : showToast.type === 'error' ? '#ff0000' : '#00ffff'}`,
+          borderRadius: '10px',
+          padding: '15px 25px',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: `0 0 20px ${showToast.type === 'success' ? '#00ff00' : showToast.type === 'error' ? '#ff0000' : '#00ffff'}`,
+          animation: 'slideIn 0.3s ease-out'
+        }}>
+          {showToast.type === 'success' ? <Check size={20} color="#00ff00" /> : <AlertCircle size={20} color="#00ffff" />}
+          <span style={{ color: '#fff', fontSize: '14px' }}>{showToast.message}</span>
+        </div>
+      )}
+
       {/* Top Navigation */}
       <nav style={{
         position: 'sticky',
@@ -232,7 +275,12 @@ const ScraperConsole = () => {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
               <div style={{ position: 'relative' }}>
-                <Bell size={22} color="#bb86fc" style={{ cursor: 'pointer' }} />
+                <Bell 
+                  size={22} 
+                  color="#bb86fc" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setShowNotifications(!showNotifications)}
+                />
                 <span style={{
                   position: 'absolute',
                   top: '-5px',
@@ -247,7 +295,42 @@ const ScraperConsole = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 'bold'
-                }}>3</span>
+                }}>2</span>
+                {showNotifications && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '40px',
+                    right: '0',
+                    background: 'rgba(0, 0, 0, 0.95)',
+                    border: '1px solid rgba(204, 0, 102, 0.5)',
+                    borderRadius: '15px',
+                    minWidth: '300px',
+                    maxHeight: '400px',
+                    overflowY: 'auto',
+                    boxShadow: '0 10px 30px rgba(204, 0, 102, 0.3)',
+                    zIndex: 1000
+                  }}>
+                    <div style={{ padding: '15px', borderBottom: '1px solid rgba(204, 0, 102, 0.3)' }}>
+                      <h3 style={{ color: '#ff00ff', fontSize: '14px', margin: 0 }}>Notifications</h3>
+                    </div>
+                    {notifications.map(notif => (
+                      <div key={notif.id} style={{
+                        padding: '12px 15px',
+                        borderBottom: '1px solid rgba(204, 0, 102, 0.2)',
+                        color: '#bb86fc',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = 'rgba(204, 0, 102, 0.1)'}
+                      onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                      >
+                        <p style={{ margin: 0, marginBottom: '4px' }}>{notif.message}</p>
+                        <p style={{ margin: 0, color: '#8888aa', fontSize: '11px' }}>{notif.time}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div style={{
                 width: '38px',
@@ -699,6 +782,13 @@ const ScraperConsole = () => {
               border: '1px solid rgba(204, 0, 102, 0.3)',
               borderRadius: '20px',
               padding: '25px',
+<<<<<<< HEAD
+=======
+              position: 'sticky',
+              top: '100px',
+              maxHeight: 'calc(100vh - 150px)',
+              overflowY: 'auto'
+>>>>>>> 724a93d535d69049272d9d7188fdb27bb1b608ef
             }}>
               <h3 style={{
                 color: '#ff00ff',
@@ -732,6 +822,7 @@ const ScraperConsole = () => {
                   <button
                     onClick={() => {
                       setAutoScrape(!autoScrape);
+                      showToastNotification(autoScrape ? '⏸️ Auto-scrape disabled' : '✅ Auto-scrape enabled', autoScrape ? 'info' : 'success');
                       addLog(autoScrape ? 'warning' : 'success', autoScrape ? '⏸️ Auto-scrape disabled' : '✅ Auto-scrape enabled - Running every 24 hours');
                     }}
                     style={{
@@ -922,6 +1013,9 @@ const ScraperConsole = () => {
                   transition: 'all 0.3s',
                   fontFamily: "'Orbitron', monospace"
                 }}
+                onClick={() => {
+                  showToastNotification('📥 Exporting all data...', 'info');
+                }}
                 onMouseEnter={e => {
                   e.currentTarget.style.background = 'rgba(204, 0, 102, 0.3)';
                   e.currentTarget.style.transform = 'translateX(5px)';
@@ -950,6 +1044,9 @@ const ScraperConsole = () => {
                   transition: 'all 0.3s',
                   fontFamily: "'Orbitron', monospace"
                 }}
+                onClick={() => {
+                  showToastNotification('⚙️ Opening API configuration...', 'info');
+                }}
                 onMouseEnter={e => {
                   e.currentTarget.style.background = 'rgba(204, 0, 102, 0.3)';
                   e.currentTarget.style.transform = 'translateX(5px)';
@@ -967,6 +1064,7 @@ const ScraperConsole = () => {
                     updatePlatformStatus('youtube', 'idle');
                     updatePlatformStatus('reddit', 'idle');
                     updatePlatformStatus('instagram', 'idle');
+                    showToastNotification('🔄 All platform statuses reset', 'success');
                     addLog('info', '🔄 All platform statuses reset');
                   }}
                   style={{
